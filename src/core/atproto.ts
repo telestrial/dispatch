@@ -1,0 +1,90 @@
+import { AtpAgent, type AtpSessionData } from '@atproto/api'
+
+export const CHANNEL_LEXICON = 'dev.sia.dispatch.channel'
+const DEFAULT_SERVICE = 'https://bsky.social'
+
+export type ChannelPointerRecord = {
+  $type: typeof CHANNEL_LEXICON
+  channelHandle: string
+  name: string
+  latestManifestURL: string
+  updatedAt: string
+}
+
+export type ATProtoSession = AtpSessionData
+
+export async function signIn(
+  identifier: string,
+  password: string,
+): Promise<{ session: ATProtoSession; agent: AtpAgent }> {
+  const agent = new AtpAgent({ service: DEFAULT_SERVICE })
+  await agent.login({ identifier, password })
+  if (!agent.session) {
+    throw new Error('Login succeeded but no session returned')
+  }
+  return { session: agent.session, agent }
+}
+
+export async function resumeSession(
+  session: ATProtoSession,
+): Promise<AtpAgent> {
+  const agent = new AtpAgent({ service: DEFAULT_SERVICE })
+  await agent.resumeSession(session)
+  return agent
+}
+
+export async function putChannelRecord(
+  agent: AtpAgent,
+  record: Omit<ChannelPointerRecord, '$type'>,
+): Promise<{ uri: string; cid: string }> {
+  const session = agent.session
+  if (!session) throw new Error('ATProto agent has no session')
+  const result = await agent.com.atproto.repo.putRecord({
+    repo: session.did,
+    collection: CHANNEL_LEXICON,
+    rkey: record.channelHandle,
+    record: { $type: CHANNEL_LEXICON, ...record },
+    validate: false,
+  })
+  return { uri: result.data.uri, cid: result.data.cid }
+}
+
+export async function getChannelRecord(
+  authorHandleOrDID: string,
+  channelHandle: string,
+): Promise<ChannelPointerRecord> {
+  const agent = new AtpAgent({ service: DEFAULT_SERVICE })
+  const result = await agent.com.atproto.repo.getRecord({
+    repo: authorHandleOrDID,
+    collection: CHANNEL_LEXICON,
+    rkey: channelHandle,
+  })
+  return result.data.value as ChannelPointerRecord
+}
+
+export async function listChannelRecords(
+  authorHandleOrDID: string,
+): Promise<Array<{ rkey: string; record: ChannelPointerRecord }>> {
+  const agent = new AtpAgent({ service: DEFAULT_SERVICE })
+  const result = await agent.com.atproto.repo.listRecords({
+    repo: authorHandleOrDID,
+    collection: CHANNEL_LEXICON,
+  })
+  return result.data.records.map((r) => {
+    const rkey = r.uri.split('/').pop() ?? ''
+    return { rkey, record: r.value as ChannelPointerRecord }
+  })
+}
+
+export async function deleteChannelRecord(
+  agent: AtpAgent,
+  channelHandle: string,
+): Promise<void> {
+  const session = agent.session
+  if (!session) throw new Error('ATProto agent has no session')
+  await agent.com.atproto.repo.deleteRecord({
+    repo: session.did,
+    collection: CHANNEL_LEXICON,
+    rkey: channelHandle,
+  })
+}
