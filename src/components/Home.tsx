@@ -1,4 +1,57 @@
+import { useState } from 'react'
+import { CopyButton } from './CopyButton'
+import { CreateChannel } from './CreateChannel'
+
+type View =
+  | { kind: 'idle' }
+  | { kind: 'creating' }
+  | { kind: 'created'; channelUrl: string; name: string }
+
 export function Home() {
+  const [view, setView] = useState<View>({ kind: 'idle' })
+
+  if (view.kind === 'creating') {
+    return (
+      <CreateChannel
+        onCancel={() => setView({ kind: 'idle' })}
+        onCreated={(channelUrl, name) =>
+          setView({ kind: 'created', channelUrl, name })
+        }
+      />
+    )
+  }
+
+  if (view.kind === 'created') {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center space-y-5">
+          <div className="space-y-1">
+            <h1 className="text-xl font-semibold text-neutral-900">
+              Channel created
+            </h1>
+            <p className="text-neutral-500 text-sm">
+              Share this URL so others can subscribe to{' '}
+              <span className="text-neutral-900">{view.name}</span>.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-left">
+            <code className="flex-1 text-[11px] font-mono text-neutral-700 break-all">
+              {view.channelUrl}
+            </code>
+            <CopyButton value={view.channelUrl} label="Channel URL copied" />
+          </div>
+          <button
+            type="button"
+            onClick={() => setView({ kind: 'idle' })}
+            className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-sm font-medium rounded-lg transition-colors"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex-1 flex items-center justify-center p-6">
       <div className="max-w-md w-full text-center space-y-6">
@@ -19,6 +72,7 @@ export function Home() {
           </button>
           <button
             type="button"
+            onClick={() => setView({ kind: 'creating' })}
             className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-sm font-medium rounded-lg transition-colors"
           >
             Create a channel

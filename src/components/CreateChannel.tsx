@@ -1,0 +1,123 @@
+import { useState } from 'react'
+import { createChannel } from '../core/sia'
+import { useAuthStore } from '../stores/auth'
+
+export function CreateChannel({
+  onCancel,
+  onCreated,
+}: {
+  onCancel: () => void
+  onCreated: (channelUrl: string, name: string) => void
+}) {
+  const sdk = useAuthStore((s) => s.sdk)
+  const addMyChannel = useAuthStore((s) => s.addMyChannel)
+  const addSubscription = useAuthStore((s) => s.addSubscription)
+
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!sdk) return
+    const trimmedName = name.trim()
+    if (!trimmedName) return
+    setSubmitting(true)
+    setError(null)
+    try {
+      const result = await createChannel(sdk, trimmedName, description.trim())
+      addMyChannel({
+        url: result.channelUrl,
+        name: result.channel.name,
+        createdAt: result.channel.createdAt,
+      })
+      addSubscription({
+        channelUrl: result.channelUrl,
+        addedAt: new Date().toISOString(),
+        label: result.channel.name,
+      })
+      onCreated(result.channelUrl, result.channel.name)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to create channel')
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="w-full max-w-md mx-auto space-y-5 p-6"
+    >
+      <div className="space-y-1">
+        <h1 className="text-xl font-semibold text-neutral-900">
+          Create a channel
+        </h1>
+        <p className="text-neutral-500 text-sm">
+          A publishing handle. Could be a person, a topic, a project, a
+          business — anything.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <label className="block space-y-1">
+          <span className="text-xs font-medium text-neutral-700 uppercase tracking-wider">
+            Name
+          </span>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={submitting}
+            required
+            placeholder="e.g. John Williams · Sia Notes · Cooking with John"
+            className="w-full px-3 py-2 bg-white border border-neutral-300 rounded-lg text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-green-600 disabled:bg-neutral-50 disabled:text-neutral-500"
+          />
+        </label>
+
+        <label className="block space-y-1">
+          <span className="text-xs font-medium text-neutral-700 uppercase tracking-wider">
+            Description <span className="text-neutral-400">(optional)</span>
+          </span>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            disabled={submitting}
+            rows={3}
+            placeholder="Short description"
+            className="w-full px-3 py-2 bg-white border border-neutral-300 rounded-lg text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-green-600 disabled:bg-neutral-50 disabled:text-neutral-500"
+          />
+        </label>
+      </div>
+
+      {error && (
+        <p className="text-red-600 text-sm wrap-break-word">{error}</p>
+      )}
+
+      {submitting && (
+        <p className="text-neutral-500 text-xs">
+          Uploading channel marker to Sia. This takes ~20 seconds — every
+          object pays a full slab of erasure-coded redundancy.
+        </p>
+      )}
+
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={submitting || !name.trim()}
+          className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-neutral-200 disabled:text-neutral-400 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          {submitting ? 'Creating…' : 'Create channel'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={submitting}
+          className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  )
+}
