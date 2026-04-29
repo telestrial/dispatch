@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { type OwnedChannel, useAuthStore } from '../stores/auth'
+import { useToastStore } from '../stores/toast'
 import { ChannelsView } from './ChannelsView'
 import { ComposeText } from './ComposeText'
-import { CopyButton } from './CopyButton'
 import { CreateChannel } from './CreateChannel'
 import { SubscribeToChannel } from './SubscribeToChannel'
 
@@ -19,6 +19,12 @@ export function Home() {
   const [view, setView] = useState<View>({ kind: 'idle' })
   const subscriptions = useAuthStore((s) => s.subscriptions)
   const myChannels = useAuthStore((s) => s.myChannels)
+  const addToast = useToastStore((s) => s.addToast)
+
+  function copyURL(url: string, label: string) {
+    navigator.clipboard.writeText(url)
+    addToast(label)
+  }
 
   if (view.kind === 'creating') {
     return (
@@ -44,19 +50,22 @@ export function Home() {
               <span className="text-neutral-900">{view.name}</span>.
             </p>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-left">
-            <code className="flex-1 text-[11px] font-mono text-neutral-700 wrap-break-word">
-              {view.channelURL}
-            </code>
-            <CopyButton value={view.channelURL} label="Channel URL copied" />
+          <div className="flex flex-col sm:flex-row gap-2 sm:justify-center">
+            <button
+              type="button"
+              onClick={() => copyURL(view.channelURL, 'Channel URL copied')}
+              className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Copy share URL
+            </button>
+            <button
+              type="button"
+              onClick={() => setView({ kind: 'idle' })}
+              className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-sm font-medium rounded-lg transition-colors"
+            >
+              Done
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setView({ kind: 'idle' })}
-            className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-sm font-medium rounded-lg transition-colors"
-          >
-            Done
-          </button>
         </div>
       </div>
     )
@@ -105,19 +114,22 @@ export function Home() {
               <span className="text-neutral-900">{view.title}</span>.
             </p>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-left">
-            <code className="flex-1 text-[11px] font-mono text-neutral-700 wrap-break-word">
-              {view.itemURL}
-            </code>
-            <CopyButton value={view.itemURL} label="Item URL copied" />
+          <div className="flex flex-col sm:flex-row gap-2 sm:justify-center">
+            <button
+              type="button"
+              onClick={() => copyURL(view.itemURL, 'Item URL copied')}
+              className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Copy share URL
+            </button>
+            <button
+              type="button"
+              onClick={() => setView({ kind: 'idle' })}
+              className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-sm font-medium rounded-lg transition-colors"
+            >
+              Done
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setView({ kind: 'idle' })}
-            className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-sm font-medium rounded-lg transition-colors"
-          >
-            Done
-          </button>
         </div>
       </div>
     )
