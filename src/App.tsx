@@ -1,7 +1,7 @@
 import { AuthFlow } from './components/auth/AuthFlow'
+import { Home } from './components/Home'
 import { Navbar } from './components/Navbar'
 import { Toasts } from './components/Toast'
-import { UploadZone } from './components/upload/UploadZone'
 import { useAuthStore } from './stores/auth'
 
 export default function App() {
@@ -11,7 +11,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <div className="flex-1 flex flex-col">
-        {step === 'connected' ? <UploadZone /> : <AuthFlow />}
+        {step === 'connected' ? <Home /> : <AuthFlow />}
       </div>
       <Toasts />
     </div>
