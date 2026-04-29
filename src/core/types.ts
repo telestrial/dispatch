@@ -5,7 +5,7 @@ export type ItemType = 'text' | 'image' | 'audio' | 'video'
 
 export type ItemRef = {
   id: string
-  itemUrl: string
+  itemURL: string
   type: ItemType
   title: string
   summary?: string
@@ -21,13 +21,13 @@ export type ChannelMetadata = {
   description: string
   authorPubkey: string
   createdAt: string
-  coverArtItemUrl?: string
+  coverArtItemURL?: string
   language?: string
   items: ItemRef[]
 }
 
 export type SubscriptionRef = {
-  channelUrl: string
+  channelURL: string
   addedAt: string
   label?: string
 }

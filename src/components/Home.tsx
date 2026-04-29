@@ -7,7 +7,7 @@ import { SubscribeToChannel } from './SubscribeToChannel'
 type View =
   | { kind: 'idle' }
   | { kind: 'creating' }
-  | { kind: 'created'; channelUrl: string; name: string }
+  | { kind: 'created'; channelURL: string; name: string }
   | { kind: 'subscribing' }
 
 export function Home() {
@@ -18,8 +18,8 @@ export function Home() {
     return (
       <CreateChannel
         onCancel={() => setView({ kind: 'idle' })}
-        onCreated={(channelUrl, name) =>
-          setView({ kind: 'created', channelUrl, name })
+        onCreated={(channelURL, name) =>
+          setView({ kind: 'created', channelURL, name })
         }
       />
     )
@@ -40,9 +40,9 @@ export function Home() {
           </div>
           <div className="flex items-center gap-2 px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-left">
             <code className="flex-1 text-[11px] font-mono text-neutral-700 wrap-break-word">
-              {view.channelUrl}
+              {view.channelURL}
             </code>
-            <CopyButton value={view.channelUrl} label="Channel URL copied" />
+            <CopyButton value={view.channelURL} label="Channel URL copied" />
           </div>
           <button
             type="button"
@@ -113,10 +113,10 @@ export function Home() {
           <ul className="divide-y divide-neutral-200/80">
             {subscriptions.map((sub) => (
               <li
-                key={sub.channelUrl}
+                key={sub.channelURL}
                 className="py-2 text-sm text-neutral-900"
               >
-                {sub.label || sub.channelUrl}
+                {sub.label || sub.channelURL}
               </li>
             ))}
           </ul>

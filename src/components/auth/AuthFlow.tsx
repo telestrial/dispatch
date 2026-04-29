@@ -17,14 +17,14 @@ export function AuthFlow() {
     let cancelled = false
 
     async function init() {
-      const { storedKeyHex, indexerUrl, setSdk, setStep } =
+      const { storedKeyHex, indexerURL, setSdk, setStep } =
         useAuthStore.getState()
       try {
         await initSia()
 
-        if (storedKeyHex && indexerUrl) {
+        if (storedKeyHex && indexerURL) {
           const appKey = new AppKey(Uint8Array.fromHex(storedKeyHex))
-          const builder = new Builder(indexerUrl, APP_META)
+          const builder = new Builder(indexerURL, APP_META)
           const sdk = await builder.connected(appKey)
 
           if (cancelled) return

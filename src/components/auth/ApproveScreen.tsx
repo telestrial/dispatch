@@ -9,7 +9,7 @@ export function ApproveScreen({
 }: {
   builder: React.RefObject<Builder | null>
 }) {
-  const { approvalUrl, setStep, setError } = useAuthStore()
+  const { approvalURL, setStep, setError } = useAuthStore()
   const [polling, setPolling] = useState(true)
   const [pollError, setPollError] = useState(false)
   const [manualChecking, setManualChecking] = useState(false)
@@ -81,16 +81,16 @@ export function ApproveScreen({
           </p>
         </DevNote>
 
-        {approvalUrl && (
+        {approvalURL && (
           <div className="space-y-3">
             <div className="flex items-center gap-2 p-3 bg-white border border-neutral-300 rounded-lg">
               <span className="flex-1 text-sm font-mono text-neutral-600 truncate">
-                {approvalUrl}
+                {approvalURL}
               </span>
-              <CopyButton value={approvalUrl} label="URL copied" />
+              <CopyButton value={approvalURL} label="URL copied" />
             </div>
             <a
-              href={approvalUrl}
+              href={approvalURL}
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full text-center py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"

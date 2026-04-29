@@ -9,9 +9,9 @@ export function ConnectScreen({
 }: {
   builder: React.RefObject<Builder | null>
 }) {
-  const { indexerUrl, setIndexerUrl, setStep, setError, setApprovalUrl } =
+  const { indexerURL, setIndexerURL, setStep, setError, setApprovalURL } =
     useAuthStore()
-  const [url, setUrl] = useState(indexerUrl || DEFAULT_INDEXER_URL)
+  const [url, setUrl] = useState(indexerURL || DEFAULT_INDEXER_URL)
   const [loading, setLoading] = useState(false)
 
   async function handleConnect() {
@@ -20,12 +20,12 @@ export function ConnectScreen({
     try {
       const b = new Builder(url, APP_META)
       builder.current = b
-      setIndexerUrl(url)
+      setIndexerURL(url)
 
       try {
         await b.requestConnection()
-        const approvalUrl = b.responseUrl()
-        setApprovalUrl(approvalUrl)
+        const approvalURL = b.responseUrl()
+        setApprovalURL(approvalURL)
         setStep('approve')
       } catch (e) {
         setError(

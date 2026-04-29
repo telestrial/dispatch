@@ -7,7 +7,7 @@ export function CreateChannel({
   onCreated,
 }: {
   onCancel: () => void
-  onCreated: (channelUrl: string, name: string) => void
+  onCreated: (channelURL: string, name: string) => void
 }) {
   const sdk = useAuthStore((s) => s.sdk)
   const addMyChannel = useAuthStore((s) => s.addMyChannel)
@@ -28,16 +28,17 @@ export function CreateChannel({
     try {
       const result = await createChannel(sdk, trimmedName, description.trim())
       addMyChannel({
-        url: result.channelUrl,
+        channelID: result.channelID,
+        channelURL: result.channelURL,
         name: result.channel.name,
         createdAt: result.channel.createdAt,
       })
       addSubscription({
-        channelUrl: result.channelUrl,
+        channelURL: result.channelURL,
         addedAt: new Date().toISOString(),
         label: result.channel.name,
       })
-      onCreated(result.channelUrl, result.channel.name)
+      onCreated(result.channelURL, result.channel.name)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to create channel')
       setSubmitting(false)

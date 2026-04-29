@@ -12,7 +12,8 @@ export type AuthStep =
   | 'connected'
 
 export type OwnedChannel = {
-  url: string
+  channelID: string
+  channelURL: string
   name: string
   createdAt: string
 }
@@ -20,18 +21,18 @@ export type OwnedChannel = {
 type AuthState = {
   sdk: Sdk | null
   storedKeyHex: string | null
-  indexerUrl: string
+  indexerURL: string
   step: AuthStep
   error: string | null
-  approvalUrl: string | null
+  approvalURL: string | null
   myChannels: OwnedChannel[]
   subscriptions: SubscriptionRef[]
   setSdk: (sdk: Sdk) => void
   setStep: (step: AuthStep) => void
   setError: (error: string | null) => void
   setStoredKeyHex: (hex: string) => void
-  setIndexerUrl: (url: string) => void
-  setApprovalUrl: (url: string | null) => void
+  setIndexerURL: (url: string) => void
+  setApprovalURL: (url: string | null) => void
   addMyChannel: (channel: OwnedChannel) => void
   addSubscription: (sub: SubscriptionRef) => void
   reset: () => void
@@ -42,23 +43,23 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       sdk: null,
       storedKeyHex: null,
-      indexerUrl: '',
+      indexerURL: '',
       step: 'loading',
       error: null,
-      approvalUrl: null,
+      approvalURL: null,
       myChannels: [],
       subscriptions: [],
       setSdk: (sdk) => set({ sdk, step: 'connected', error: null }),
       setStep: (step) => set({ step, error: null }),
       setError: (error) => set({ error }),
       setStoredKeyHex: (hex) => set({ storedKeyHex: hex }),
-      setIndexerUrl: (url) => set({ indexerUrl: url }),
-      setApprovalUrl: (url) => set({ approvalUrl: url }),
+      setIndexerURL: (url) => set({ indexerURL: url }),
+      setApprovalURL: (url) => set({ approvalURL: url }),
       addMyChannel: (channel) =>
         set((s) => ({ myChannels: [...s.myChannels, channel] })),
       addSubscription: (sub) =>
         set((s) =>
-          s.subscriptions.some((x) => x.channelUrl === sub.channelUrl)
+          s.subscriptions.some((x) => x.channelURL === sub.channelURL)
             ? s
             : { subscriptions: [...s.subscriptions, sub] },
         ),
@@ -68,7 +69,7 @@ export const useAuthStore = create<AuthState>()(
           storedKeyHex: null,
           step: 'loading',
           error: null,
-          approvalUrl: null,
+          approvalURL: null,
           myChannels: [],
           subscriptions: [],
         }),
@@ -77,7 +78,7 @@ export const useAuthStore = create<AuthState>()(
       name: `sia-auth-${APP_KEY.slice(0, 16)}`,
       partialize: (state) => ({
         storedKeyHex: state.storedKeyHex,
-        indexerUrl: state.indexerUrl,
+        indexerURL: state.indexerURL,
         myChannels: state.myChannels,
         subscriptions: state.subscriptions,
       }),

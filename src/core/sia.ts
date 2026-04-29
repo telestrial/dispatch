@@ -8,7 +8,8 @@ const FAR_FUTURE = new Date('9999-12-31T00:00:00Z')
 
 export type CreatedChannel = {
   channel: ChannelMetadata
-  channelUrl: string
+  channelID: string
+  channelURL: string
 }
 
 export async function createChannel(
@@ -35,15 +36,16 @@ export async function createChannel(
 
   return {
     channel,
-    channelUrl: sdk.shareObject(obj, FAR_FUTURE),
+    channelID: obj.id(),
+    channelURL: sdk.shareObject(obj, FAR_FUTURE),
   }
 }
 
 export async function fetchChannel(
   sdk: Sdk,
-  channelUrl: string,
+  channelURL: string,
 ): Promise<ChannelMetadata> {
-  const obj = await sdk.sharedObject(channelUrl)
+  const obj = await sdk.sharedObject(channelURL)
   const parsed = JSON.parse(new TextDecoder().decode(obj.metadata()))
   if (parsed?.version !== CHANNEL_METADATA_VERSION) {
     throw new Error(

@@ -22,7 +22,7 @@ export function SubscribeToChannel({
     if (!sdk) return
     const trimmed = url.trim()
     if (!trimmed) return
-    if (subscriptions.some((s) => s.channelUrl === trimmed)) {
+    if (subscriptions.some((s) => s.channelURL === trimmed)) {
       setError("You're already subscribed to this channel.")
       return
     }
@@ -31,7 +31,7 @@ export function SubscribeToChannel({
     try {
       const channel = await fetchChannel(sdk, trimmed)
       addSubscription({
-        channelUrl: trimmed,
+        channelURL: trimmed,
         addedAt: new Date().toISOString(),
         label: channel.name,
       })
