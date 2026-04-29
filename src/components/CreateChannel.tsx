@@ -35,7 +35,7 @@ export function CreateChannel({
     e.preventDefault()
     if (!sdk) return
     if (!agent || !agent.session) {
-      setError('Bluesky/ATProto sign-in required to publish channels (coming soon).')
+      setError('Bluesky session not active. Cancel and try again to sign in.')
       return
     }
     const trimmedName = name.trim()

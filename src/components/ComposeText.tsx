@@ -23,7 +23,7 @@ export function ComposeText({
     e.preventDefault()
     if (!sdk) return
     if (!agent || !agent.session) {
-      setError('Bluesky/ATProto sign-in required to publish (coming soon).')
+      setError('Bluesky session not active. Cancel and try again to sign in.')
       return
     }
     const trimmedTitle = title.trim()

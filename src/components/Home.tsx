@@ -1,11 +1,16 @@
 import { useState } from 'react'
 import { type OwnedChannel, useAuthStore } from '../stores/auth'
 import { useToastStore } from '../stores/toast'
+import { BlueskyLoginScreen } from './BlueskyLoginScreen'
 import { ChannelsView } from './ChannelsView'
 import { ComposeText } from './ComposeText'
 import { CreateChannel } from './CreateChannel'
 import { HomeFeed } from './HomeFeed'
 import { SubscribeToChannel } from './SubscribeToChannel'
+
+type GatedView =
+  | { kind: 'creating' }
+  | { kind: 'composing'; channel: OwnedChannel }
 
 type View =
   | { kind: 'idle' }
@@ -15,6 +20,7 @@ type View =
   | { kind: 'channels' }
   | { kind: 'composing'; channel: OwnedChannel }
   | { kind: 'published'; itemURL: string; title: string }
+  | { kind: 'bluesky-login'; resumeTo: GatedView; cancelTo: View }
 
 export function Home() {
   const [view, setView] = useState<View>({ kind: 'idle' })
@@ -25,6 +31,23 @@ export function Home() {
   function copyURL(url: string, label: string) {
     navigator.clipboard.writeText(url)
     addToast(label)
+  }
+
+  function gotoGated(target: GatedView) {
+    if (useAuthStore.getState().atprotoAgent) {
+      setView(target)
+    } else {
+      setView({ kind: 'bluesky-login', resumeTo: target, cancelTo: view })
+    }
+  }
+
+  if (view.kind === 'bluesky-login') {
+    return (
+      <BlueskyLoginScreen
+        onCancel={() => setView(view.cancelTo)}
+        onSignedIn={() => setView(view.resumeTo)}
+      />
+    )
   }
 
   if (view.kind === 'creating') {
@@ -85,7 +108,7 @@ export function Home() {
     return (
       <ChannelsView
         onCancel={() => setView({ kind: 'idle' })}
-        onCompose={(channel) => setView({ kind: 'composing', channel })}
+        onCompose={(channel) => gotoGated({ kind: 'composing', channel })}
       />
     )
   }
@@ -147,7 +170,7 @@ export function Home() {
       </button>
       <button
         type="button"
-        onClick={() => setView({ kind: 'creating' })}
+        onClick={() => gotoGated({ kind: 'creating' })}
         className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-sm font-medium rounded-lg transition-colors"
       >
         Create a channel
