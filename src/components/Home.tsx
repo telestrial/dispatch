@@ -4,6 +4,7 @@ import { useToastStore } from '../stores/toast'
 import { ChannelsView } from './ChannelsView'
 import { ComposeText } from './ComposeText'
 import { CreateChannel } from './CreateChannel'
+import { HomeFeed } from './HomeFeed'
 import { SubscribeToChannel } from './SubscribeToChannel'
 
 type View =
@@ -196,20 +197,7 @@ export function Home() {
           {yourChannelsAffordance}
         </div>
 
-        <ul className="divide-y divide-neutral-200/80">
-          {subscriptions.map((sub) => (
-            <li
-              key={sub.channelURL}
-              className="py-2 text-sm text-neutral-900"
-            >
-              {sub.label || sub.channelURL}
-            </li>
-          ))}
-        </ul>
-
-        <p className="text-neutral-500 text-sm">
-          No items yet from your subscriptions.
-        </p>
+        <HomeFeed />
 
         {ctas}
       </div>

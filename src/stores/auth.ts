@@ -3,6 +3,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { SubscriptionRef } from '../core/types'
 import { APP_KEY } from '../lib/constants'
+import { useFeedStore } from './feed'
 
 export type AuthStep =
   | 'loading'
@@ -63,7 +64,8 @@ export const useAuthStore = create<AuthState>()(
             ? s
             : { subscriptions: [...s.subscriptions, sub] },
         ),
-      reset: () =>
+      reset: () => {
+        useFeedStore.getState().reset()
         set({
           sdk: null,
           storedKeyHex: null,
@@ -72,7 +74,8 @@ export const useAuthStore = create<AuthState>()(
           approvalURL: null,
           myChannels: [],
           subscriptions: [],
-        }),
+        })
+      },
     }),
     {
       name: `sia-auth-${APP_KEY.slice(0, 16)}`,
