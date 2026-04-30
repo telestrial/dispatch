@@ -5,11 +5,7 @@ import type { ItemRef } from '../core/types'
 import { installAppBridge } from '../lib/appBridge'
 import { APP_SANDBOX } from '../lib/constants'
 import { renderMarkdown } from '../lib/markdown'
-import {
-  formatAbsolute,
-  formatRelative,
-  formatRelativeShort,
-} from '../lib/time'
+import { formatAbsolute, formatRelativeShort } from '../lib/time'
 import { useAuthStore } from '../stores/auth'
 import { useFeedStore } from '../stores/feed'
 import { ChannelMark } from './ChannelMark'
@@ -77,6 +73,7 @@ export function HomeFeed({
   const errors = useFeedStore((s) => s.errors)
   const loading = useFeedStore((s) => s.loading)
   const lastRefreshedAt = useFeedStore((s) => s.lastRefreshedAt)
+  const live = useFeedStore((s) => s.live)
   const refresh = useFeedStore((s) => s.refresh)
 
   useEffect(() => {
@@ -120,23 +117,32 @@ export function HomeFeed({
         })}
       </div>
       <div className="flex items-center gap-2 text-xs text-neutral-500">
-        {lastRefreshedAt && (
-          <span className="hidden sm:inline">
-            Updated {formatRelative(lastRefreshedAt)}
+        {live ? (
+          <span className="hidden sm:inline-flex items-center gap-1.5">
+            <span className="relative flex size-1.5">
+              <span className="animate-ping absolute inline-flex size-full rounded-full bg-green-500 opacity-75" />
+              <span className="relative inline-flex rounded-full size-1.5 bg-green-600" />
+            </span>
+            Live
+          </span>
+        ) : (
+          <span className="hidden sm:inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-neutral-400" />
+            Offline
           </span>
         )}
         <button
           type="button"
           onClick={() => refresh(subscriptions)}
           disabled={loading}
-          title={
-            lastRefreshedAt
-              ? `Last refreshed ${formatRelative(lastRefreshedAt)}`
-              : undefined
-          }
-          className="px-2.5 py-1 text-xs font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded transition-colors disabled:opacity-50"
+          className="relative px-2.5 py-1 text-xs font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded transition-colors disabled:opacity-50"
         >
-          {loading ? 'Refreshing…' : 'Refresh'}
+          <span className={loading ? 'invisible' : ''}>Refresh</span>
+          {loading && (
+            <span className="absolute inset-0 flex items-center justify-center">
+              <span className="size-3 border-2 border-neutral-300 border-t-neutral-700 rounded-full animate-spin" />
+            </span>
+          )}
         </button>
       </div>
     </div>

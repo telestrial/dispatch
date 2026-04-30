@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { fetchChannel } from '../core/channels'
 import {
   buildHomeFeed,
   type FeedEntry,
@@ -11,7 +12,10 @@ type FeedState = {
   errors: FeedFetchError[]
   loading: boolean
   lastRefreshedAt: string | null
+  live: boolean
   refresh: (subscriptions: SubscriptionRef[]) => Promise<void>
+  refreshChannel: (sub: SubscriptionRef) => Promise<void>
+  setLive: (live: boolean) => void
   reset: () => void
 }
 
@@ -20,6 +24,7 @@ export const useFeedStore = create<FeedState>()((set) => ({
   errors: [],
   loading: false,
   lastRefreshedAt: null,
+  live: false,
   refresh: async (subscriptions) => {
     set({ loading: true })
     const result = await buildHomeFeed(subscriptions)
@@ -30,11 +35,45 @@ export const useFeedStore = create<FeedState>()((set) => ({
       loading: false,
     })
   },
+  refreshChannel: async (sub) => {
+    try {
+      const manifest = await fetchChannel(
+        sub.authorDID || sub.authorHandle,
+        sub.channelID,
+        sub.channelKey,
+      )
+      set((s) => {
+        const others = s.entries.filter(
+          (e) =>
+            !(
+              e.channel.authorHandle === sub.authorHandle &&
+              e.channel.channelID === sub.channelID
+            ),
+        )
+        const fresh: FeedEntry[] = manifest.items.map((item) => ({
+          item,
+          channel: {
+            authorHandle: sub.authorHandle,
+            channelID: sub.channelID,
+            name: manifest.name,
+          },
+        }))
+        return { entries: [...others, ...fresh] }
+      })
+    } catch (e) {
+      console.warn(
+        `Failed to refresh channel ${sub.authorHandle}/${sub.channelID}:`,
+        e,
+      )
+    }
+  },
+  setLive: (live) => set({ live }),
   reset: () =>
     set({
       entries: [],
       errors: [],
       loading: false,
       lastRefreshedAt: null,
+      live: false,
     }),
 }))

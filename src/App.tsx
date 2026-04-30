@@ -4,10 +4,13 @@ import { Home } from './components/Home'
 import { Navbar } from './components/Navbar'
 import { Toasts } from './components/Toast'
 import { resumeSession } from './core/atproto'
+import { useJetstream } from './lib/useJetstream'
 import { useAuthStore } from './stores/auth'
 
 export default function App() {
   const step = useAuthStore((s) => s.step)
+
+  useJetstream()
 
   useEffect(() => {
     const { atprotoSession, atprotoAgent, setATProtoSession } =
