@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { downloadItemBytes } from '../core/channels'
 import type { ItemRef } from '../core/types'
 import { renderMarkdown } from '../lib/markdown'
+import { formatAbsolute, formatRelative } from '../lib/time'
 import { useAuthStore } from '../stores/auth'
 
 export function ReadText({
@@ -48,17 +49,16 @@ export function ReadText({
           ← Back to feed
         </button>
 
-        <header className="space-y-1">
-          <h1 className="text-2xl font-semibold text-neutral-900 wrap-break-word">
-            {item.title}
-          </h1>
-          <p className="text-xs text-neutral-500">
-            {channelName} ·{' '}
-            {new Date(item.publishedAt).toLocaleString(undefined, {
-              dateStyle: 'medium',
-              timeStyle: 'short',
-            })}
+        <header className="space-y-2">
+          <p className="text-sm text-neutral-500">
+            <span className="font-medium text-neutral-900">{channelName}</span>{' '}
+            · {formatRelative(item.publishedAt)}
           </p>
+          {item.title && (
+            <p className="text-base font-semibold text-neutral-900 wrap-break-word">
+              {item.title}
+            </p>
+          )}
         </header>
 
         {error ? (
@@ -67,11 +67,15 @@ export function ReadText({
           <p className="text-neutral-500 text-sm">Loading…</p>
         ) : (
           <div
-            className="markdown wrap-break-word"
+            className="markdown wrap-break-word text-base sm:text-lg"
             // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is sanitized via DOMPurify
             dangerouslySetInnerHTML={{ __html: html }}
           />
         )}
+
+        <footer className="pt-2 text-xs text-neutral-500">
+          {formatAbsolute(item.publishedAt)}
+        </footer>
       </article>
     </div>
   )
