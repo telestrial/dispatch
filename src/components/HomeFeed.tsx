@@ -61,7 +61,7 @@ export function HomeFeed({
         <ul className="divide-y divide-neutral-200/80">
           {entries.map((entry) => {
             const { item, channel } = entry
-            const clickable = item.type === 'text'
+            const clickable = item.type === 'text' || item.type === 'image'
             return (
               <li key={item.id}>
                 <button

@@ -4,9 +4,10 @@ import { type OwnedChannel, useAuthStore } from '../stores/auth'
 import { useToastStore } from '../stores/toast'
 import { BlueskyLoginScreen } from './BlueskyLoginScreen'
 import { ChannelsView } from './ChannelsView'
-import { ComposeText } from './ComposeText'
+import { Compose } from './Compose'
 import { CreateChannel } from './CreateChannel'
 import { HomeFeed } from './HomeFeed'
+import { ReadImage } from './ReadImage'
 import { ReadText } from './ReadText'
 import { SubscribeToChannel } from './SubscribeToChannel'
 
@@ -118,7 +119,7 @@ export function Home() {
 
   if (view.kind === 'composing') {
     return (
-      <ComposeText
+      <Compose
         channel={view.channel}
         onCancel={() => setView({ kind: 'channels' })}
         onPublished={(itemURL, title) =>
@@ -129,13 +130,14 @@ export function Home() {
   }
 
   if (view.kind === 'reading') {
-    return (
-      <ReadText
-        item={view.entry.item}
-        channelName={view.entry.channel.name}
-        onBack={() => setView({ kind: 'idle' })}
-      />
-    )
+    const { item, channel } = view.entry
+    const onBack = () => setView({ kind: 'idle' })
+    if (item.type === 'image') {
+      return (
+        <ReadImage item={item} channelName={channel.name} onBack={onBack} />
+      )
+    }
+    return <ReadText item={item} channelName={channel.name} onBack={onBack} />
   }
 
   if (view.kind === 'published') {
