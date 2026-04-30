@@ -141,7 +141,10 @@
         }
       }
 
-      canvas.addEventListener('mousemove', (e) => {
+      // Listen on document, not canvas, so the cursor-Y still drives the
+      // paddle even when the cursor is in the letterbox bars left/right of
+      // the canvas in fullscreen.
+      document.addEventListener('mousemove', (e) => {
         const rect = canvas.getBoundingClientRect()
         const scaleY = H / rect.height
         const y = (e.clientY - rect.top) * scaleY
