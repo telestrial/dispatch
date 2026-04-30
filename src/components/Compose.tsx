@@ -1,16 +1,19 @@
 import { useState } from 'react'
-import type { ItemType } from '../core/types'
 import type { OwnedChannel } from '../stores/auth'
 import { ComposeAudio } from './ComposeAudio'
 import { ComposeImage } from './ComposeImage'
+import { ComposeNote } from './ComposeNote'
 import { ComposePost } from './ComposePost'
 import { ComposeVideo } from './ComposeVideo'
 
-const TABS: { type: ItemType; label: string }[] = [
-  { type: 'text', label: 'Text' },
-  { type: 'image', label: 'Image' },
-  { type: 'audio', label: 'Audio' },
-  { type: 'video', label: 'Video' },
+type Tab = 'note' | 'post' | 'image' | 'audio' | 'video'
+
+const TABS: { tab: Tab; label: string }[] = [
+  { tab: 'note', label: 'Note' },
+  { tab: 'post', label: 'Post' },
+  { tab: 'image', label: 'Image' },
+  { tab: 'audio', label: 'Audio' },
+  { tab: 'video', label: 'Video' },
 ]
 
 export function Compose({
@@ -22,7 +25,7 @@ export function Compose({
   onCancel: () => void
   onPublished: (itemURL: string, title: string) => void
 }) {
-  const [type, setType] = useState<ItemType>('text')
+  const [tab, setTab] = useState<Tab>('note')
 
   const formProps = { channel, onCancel, onPublished }
 
@@ -33,32 +36,33 @@ export function Compose({
           Publish to {channel.name}
         </h1>
         <div className="flex gap-2" role="tablist">
-          {TABS.map((tab) => {
-            const active = tab.type === type
+          {TABS.map((t) => {
+            const active = t.tab === tab
             return (
               <button
-                key={tab.type}
+                key={t.tab}
                 type="button"
                 role="tab"
                 aria-selected={active}
-                onClick={() => setType(tab.type)}
+                onClick={() => setTab(t.tab)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                   active
                     ? 'bg-neutral-900 text-white'
                     : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                 }`}
               >
-                {tab.label}
+                {t.label}
               </button>
             )
           })}
         </div>
       </div>
 
-      {type === 'text' && <ComposePost {...formProps} />}
-      {type === 'image' && <ComposeImage {...formProps} />}
-      {type === 'audio' && <ComposeAudio {...formProps} />}
-      {type === 'video' && <ComposeVideo {...formProps} />}
+      {tab === 'note' && <ComposeNote {...formProps} />}
+      {tab === 'post' && <ComposePost {...formProps} />}
+      {tab === 'image' && <ComposeImage {...formProps} />}
+      {tab === 'audio' && <ComposeAudio {...formProps} />}
+      {tab === 'video' && <ComposeVideo {...formProps} />}
     </div>
   )
 }

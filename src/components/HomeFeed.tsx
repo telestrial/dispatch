@@ -1,5 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import type { FeedEntry } from '../core/feed'
+import { renderMarkdown } from '../lib/markdown'
 import { useAuthStore } from '../stores/auth'
 import { useFeedStore } from '../stores/feed'
 
@@ -59,27 +60,13 @@ export function HomeFeed({
 
       {entries.length > 0 ? (
         <ul className="divide-y divide-neutral-200/80">
-          {entries.map((entry) => {
-            const { item, channel } = entry
-            return (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  onClick={() => onItemClick(entry)}
-                  className="w-full text-left py-3 space-y-1 hover:bg-neutral-50 cursor-pointer px-2 -mx-2 rounded transition-colors"
-                >
-                  <p className="text-sm text-neutral-900">{item.title}</p>
-                  {item.summary && (
-                    <p className="text-sm text-neutral-600">{item.summary}</p>
-                  )}
-                  <p className="text-xs text-neutral-500">
-                    {channel.name} · {formatRelative(item.publishedAt)} ·{' '}
-                    {item.type}
-                  </p>
-                </button>
-              </li>
-            )
-          })}
+          {entries.map((entry) => (
+            <FeedRow
+              key={entry.item.id}
+              entry={entry}
+              onItemClick={onItemClick}
+            />
+          ))}
         </ul>
       ) : (
         <p className="text-neutral-500 text-sm">
@@ -101,5 +88,59 @@ export function HomeFeed({
         )}
       </div>
     </div>
+  )
+}
+
+function FeedRow({
+  entry,
+  onItemClick,
+}: {
+  entry: FeedEntry
+  onItemClick: (entry: FeedEntry) => void
+}) {
+  const { item, channel } = entry
+  const isNote = item.title === ''
+
+  const noteHTML = useMemo(
+    () => (isNote ? renderMarkdown(item.summary ?? '') : null),
+    [isNote, item.summary],
+  )
+
+  const meta = (
+    <p className="text-xs text-neutral-500">
+      {channel.name} · {formatRelative(item.publishedAt)}
+      {!isNote && ` · ${item.type}`}
+    </p>
+  )
+
+  if (isNote) {
+    return (
+      <li>
+        <div className="py-3 space-y-1 px-2 -mx-2">
+          <div
+            className="markdown wrap-break-word text-sm text-neutral-900"
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is sanitized via DOMPurify
+            dangerouslySetInnerHTML={{ __html: noteHTML ?? '' }}
+          />
+          {meta}
+        </div>
+      </li>
+    )
+  }
+
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => onItemClick(entry)}
+        className="w-full text-left py-3 space-y-1 hover:bg-neutral-50 cursor-pointer px-2 -mx-2 rounded transition-colors"
+      >
+        <p className="text-sm text-neutral-900">{item.title}</p>
+        {item.summary && (
+          <p className="text-sm text-neutral-600">{item.summary}</p>
+        )}
+        {meta}
+      </button>
+    </li>
   )
 }

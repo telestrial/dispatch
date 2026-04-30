@@ -1,8 +1,7 @@
-import DOMPurify from 'dompurify'
-import { marked } from 'marked'
 import { useEffect, useState } from 'react'
 import { downloadItemBytes } from '../core/channels'
 import type { ItemRef } from '../core/types'
+import { renderMarkdown } from '../lib/markdown'
 import { useAuthStore } from '../stores/auth'
 
 export function ReadText({
@@ -27,8 +26,7 @@ export function ReadText({
       .then((bytes) => {
         if (cancelled) return
         const text = new TextDecoder().decode(bytes)
-        const rawHTML = marked.parse(text, { async: false }) as string
-        setHtml(DOMPurify.sanitize(rawHTML))
+        setHtml(renderMarkdown(text))
       })
       .catch((e) => {
         if (cancelled) return
