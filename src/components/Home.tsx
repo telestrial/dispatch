@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FeedEntry } from '../core/feed'
-import { type OwnedChannel, useAuthStore } from '../stores/auth'
+import { useAuthStore } from '../stores/auth'
 import { useToastStore } from '../stores/toast'
 import { BlueskyLoginScreen } from './BlueskyLoginScreen'
 import { ChannelsView } from './ChannelsView'
@@ -15,25 +15,20 @@ import { ReadText } from './ReadText'
 import { ReadVideo } from './ReadVideo'
 import { SubscribeToChannel } from './SubscribeToChannel'
 
-type GatedView =
-  | { kind: 'creating' }
-  | { kind: 'composing'; channel: OwnedChannel }
-
 type View =
   | { kind: 'idle' }
   | { kind: 'creating' }
   | { kind: 'created'; subscribeURL: string; name: string }
   | { kind: 'subscribing' }
   | { kind: 'channels' }
-  | { kind: 'composing'; channel: OwnedChannel }
-  | { kind: 'published'; itemURL: string; title: string }
   | { kind: 'reading'; entry: FeedEntry }
-  | { kind: 'bluesky-login'; resumeTo: GatedView; cancelTo: View }
+  | { kind: 'bluesky-login'; resumeTo: View; cancelTo: View }
 
 export function Home() {
   const [view, setView] = useState<View>({ kind: 'idle' })
   const subscriptions = useAuthStore((s) => s.subscriptions)
   const myChannels = useAuthStore((s) => s.myChannels)
+  const atprotoAgent = useAuthStore((s) => s.atprotoAgent)
   const addToast = useToastStore((s) => s.addToast)
 
   function copyURL(url: string, label: string) {
@@ -41,12 +36,28 @@ export function Home() {
     addToast(label)
   }
 
-  function gotoGated(target: GatedView) {
+  function gotoCreating() {
     if (useAuthStore.getState().atprotoAgent) {
-      setView(target)
+      setView({ kind: 'creating' })
     } else {
-      setView({ kind: 'bluesky-login', resumeTo: target, cancelTo: view })
+      setView({
+        kind: 'bluesky-login',
+        resumeTo: { kind: 'creating' },
+        cancelTo: view,
+      })
     }
+  }
+
+  function gotoBlueskyLogin() {
+    setView({
+      kind: 'bluesky-login',
+      resumeTo: { kind: 'idle' },
+      cancelTo: view,
+    })
+  }
+
+  function handlePublished(itemURL: string, title: string) {
+    copyURL(itemURL, `Published “${title}” — share URL copied`)
   }
 
   if (view.kind === 'bluesky-login') {
@@ -113,24 +124,7 @@ export function Home() {
   }
 
   if (view.kind === 'channels') {
-    return (
-      <ChannelsView
-        onCancel={() => setView({ kind: 'idle' })}
-        onCompose={(channel) => gotoGated({ kind: 'composing', channel })}
-      />
-    )
-  }
-
-  if (view.kind === 'composing') {
-    return (
-      <Compose
-        channel={view.channel}
-        onCancel={() => setView({ kind: 'channels' })}
-        onPublished={(itemURL, title) =>
-          setView({ kind: 'published', itemURL, title })
-        }
-      />
-    )
+    return <ChannelsView onCancel={() => setView({ kind: 'idle' })} />
   }
 
   if (view.kind === 'reading') {
@@ -145,39 +139,31 @@ export function Home() {
     return <ReadText {...readerProps} />
   }
 
-  if (view.kind === 'published') {
-    return (
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="max-w-md w-full text-center space-y-5">
-          <div className="space-y-1">
-            <h1 className="text-xl font-semibold text-neutral-900">
-              Item published
-            </h1>
-            <p className="text-neutral-500 text-sm">
-              Direct link to{' '}
-              <span className="text-neutral-900">{view.title}</span>.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:justify-center">
-            <button
-              type="button"
-              onClick={() => copyURL(view.itemURL, 'Item URL copied')}
-              className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
-            >
-              Copy share URL
-            </button>
-            <button
-              type="button"
-              onClick={() => setView({ kind: 'idle' })}
-              className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-sm font-medium rounded-lg transition-colors"
-            >
-              Done
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const composerSlot = (() => {
+    if (myChannels.length === 0) {
+      return (
+        <button
+          type="button"
+          onClick={gotoCreating}
+          className="w-full text-left px-4 py-3 border border-neutral-200 rounded-lg bg-white text-sm text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition-colors cursor-pointer"
+        >
+          Create a channel to start publishing →
+        </button>
+      )
+    }
+    if (!atprotoAgent) {
+      return (
+        <button
+          type="button"
+          onClick={gotoBlueskyLogin}
+          className="w-full text-left px-4 py-3 border border-neutral-200 rounded-lg bg-white text-sm text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition-colors cursor-pointer"
+        >
+          Sign in to Bluesky to publish →
+        </button>
+      )
+    }
+    return <Compose channels={myChannels} onPublished={handlePublished} />
+  })()
 
   const ctas = (
     <div className="flex flex-col sm:flex-row gap-2 sm:justify-center">
@@ -190,7 +176,7 @@ export function Home() {
       </button>
       <button
         type="button"
-        onClick={() => gotoGated({ kind: 'creating' })}
+        onClick={gotoCreating}
         className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-sm font-medium rounded-lg transition-colors"
       >
         Create a channel
@@ -237,6 +223,8 @@ export function Home() {
           </h2>
           {yourChannelsAffordance}
         </div>
+
+        {composerSlot}
 
         <HomeFeed
           onItemClick={(entry) => setView({ kind: 'reading', entry })}

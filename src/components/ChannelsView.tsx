@@ -1,14 +1,8 @@
 import { buildSubscribeURL } from '../core/channels'
-import { useAuthStore, type OwnedChannel } from '../stores/auth'
+import { useAuthStore } from '../stores/auth'
 import { CopyButton } from './CopyButton'
 
-export function ChannelsView({
-  onCancel,
-  onCompose,
-}: {
-  onCancel: () => void
-  onCompose: (channel: OwnedChannel) => void
-}) {
+export function ChannelsView({ onCancel }: { onCancel: () => void }) {
   const myChannels = useAuthStore((s) => s.myChannels)
   const session = useAuthStore((s) => s.atprotoSession)
 
@@ -39,21 +33,14 @@ export function ChannelsView({
                     {c.channelID}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {session && (
+                {session && (
+                  <div className="shrink-0">
                     <CopyButton
                       value={buildSubscribeURL(session.handle, c.channelKey)}
                       label="Subscribe URL copied"
                     />
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => onCompose(c)}
-                    className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 text-white font-medium rounded transition-colors"
-                  >
-                    Publish
-                  </button>
-                </div>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

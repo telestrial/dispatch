@@ -4,11 +4,9 @@ import { type OwnedChannel, useAuthStore } from '../stores/auth'
 
 export function ComposePost({
   channel,
-  onCancel,
   onPublished,
 }: {
   channel: OwnedChannel
-  onCancel: () => void
   onPublished: (itemURL: string, title: string) => void
 }) {
   const sdk = useAuthStore((s) => s.sdk)
@@ -96,23 +94,13 @@ export function ComposePost({
         </p>
       )}
 
-      <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={submitting || !title.trim() || !body.trim()}
-          className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-neutral-200 disabled:text-neutral-400 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          {submitting ? 'Publishing…' : 'Publish'}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={submitting}
-          className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-        >
-          Cancel
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={submitting || !title.trim() || !body.trim()}
+        className="w-full px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-neutral-200 disabled:text-neutral-400 text-white text-sm font-medium rounded-lg transition-colors"
+      >
+        {submitting ? 'Publishing…' : 'Publish'}
+      </button>
     </form>
   )
 }
