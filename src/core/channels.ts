@@ -31,6 +31,7 @@ export type ItemPayload = {
   mimeType: string
   bytes: Uint8Array
   durationMs?: number
+  filename?: string
 }
 
 export async function createChannel(
@@ -101,6 +102,7 @@ export async function publishItem(
     mimeType: payload.mimeType,
     byteSize: uploaded.byteSize,
     durationMs: payload.durationMs,
+    filename: payload.filename,
   }
 
   const session = agent.session

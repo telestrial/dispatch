@@ -1,7 +1,7 @@
 export const CHANNEL_MANIFEST_VERSION = 1
 export const SUBSCRIPTIONS_VERSION = 1
 
-export type ItemType = 'text' | 'image' | 'audio' | 'video'
+export type ItemType = 'text' | 'image' | 'audio' | 'video' | 'file'
 
 export type ItemRef = {
   id: string
@@ -13,6 +13,7 @@ export type ItemRef = {
   mimeType: string
   byteSize: number
   durationMs?: number
+  filename?: string
 }
 
 export type ChannelManifest = {

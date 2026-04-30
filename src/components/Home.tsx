@@ -8,6 +8,7 @@ import { Compose } from './Compose'
 import { CreateChannel } from './CreateChannel'
 import { HomeFeed } from './HomeFeed'
 import { ReadAudio } from './ReadAudio'
+import { ReadFile } from './ReadFile'
 import { ReadImage } from './ReadImage'
 import { ReadText } from './ReadText'
 import { ReadVideo } from './ReadVideo'
@@ -138,6 +139,7 @@ export function Home() {
     if (item.type === 'image') return <ReadImage {...readerProps} />
     if (item.type === 'audio') return <ReadAudio {...readerProps} />
     if (item.type === 'video') return <ReadVideo {...readerProps} />
+    if (item.type === 'file') return <ReadFile {...readerProps} />
     return <ReadText {...readerProps} />
   }
 
