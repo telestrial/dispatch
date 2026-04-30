@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { downloadItemBytes } from '../core/channels'
 import type { ItemRef } from '../core/types'
 import { WEBAPP_SANDBOX } from '../lib/constants'
+import { installWebappBridge } from '../lib/webappBridge'
 import { useAuthStore } from '../stores/auth'
 
 export function ReadWebapp({
@@ -36,6 +37,10 @@ export function ReadWebapp({
       cancelled = true
     }
   }, [sdk, item.itemURL])
+
+  useEffect(() => {
+    return installWebappBridge(() => iframeRef.current, item.id)
+  }, [item.id])
 
   function enterFullscreen() {
     iframeRef.current?.requestFullscreen?.()
@@ -76,7 +81,7 @@ export function ReadWebapp({
               title={item.title}
               srcDoc={html}
               sandbox={WEBAPP_SANDBOX}
-              className="w-full aspect-[4/3] rounded-lg border border-neutral-200 bg-white"
+              className="w-full aspect-4/3 rounded-lg border border-neutral-200 bg-white"
             />
             <div className="flex justify-end">
               <button
