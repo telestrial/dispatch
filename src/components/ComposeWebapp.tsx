@@ -114,6 +114,7 @@ export function ComposeWebapp({
             title="Webapp preview"
             srcDoc={previewHTML}
             sandbox={WEBAPP_SANDBOX}
+            allow="fullscreen"
             className="w-full aspect-4/3 rounded-lg border border-neutral-200 bg-white"
           />
         )}
