@@ -89,22 +89,35 @@
       const ball = { x: W / 2, y: H / 2, vx: 0, vy: 0 }
       let score = 0
       let best = 0
-      let state = 'loading' // 'loading' | 'waiting' | 'playing'
+      let state = 'loading' // 'loading' | 'waiting' | 'playing' | 'paused'
 
       function serve(direction) {
         ball.x = W / 2
         ball.y = H / 2
         const angle = (Math.random() - 0.5) * (Math.PI / 2.5) // ±36°
         // Cap below paddle width (12) so the ball can't tunnel through.
-        const baseSpeed = Math.min(5 + score * 0.4, 11)
+        const baseSpeed = Math.min(4 + score * 0.4, 11)
         ball.vx = Math.cos(angle) * baseSpeed * direction
         ball.vy = Math.sin(angle) * baseSpeed
+      }
+
+      function enterFullscreen() {
+        // Fullscreen needs a user gesture; this is called from click/touch
+        // handlers so the browser accepts it. If denied (user setting,
+        // running standalone, etc.) the game still plays in window.
+        document.documentElement.requestFullscreen?.().catch(() => {})
       }
 
       function startGame() {
         score = 0
         state = 'playing'
         serve(Math.random() < 0.5 ? -1 : 1)
+        enterFullscreen()
+      }
+
+      function resumeGame() {
+        state = 'playing'
+        enterFullscreen()
       }
 
       function paddleBounce(paddleY, dirAfter) {
@@ -147,10 +160,20 @@
 
       canvas.addEventListener('click', () => {
         if (state === 'waiting') startGame()
+        else if (state === 'paused') resumeGame()
       })
 
       canvas.addEventListener('touchstart', () => {
         if (state === 'waiting') startGame()
+        else if (state === 'paused') resumeGame()
+      })
+
+      // Esc out of fullscreen mid-game → pause. Click resumes (re-enters
+      // fullscreen). Game-over or 'waiting' aren't affected.
+      document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement && state === 'playing') {
+          state = 'paused'
+        }
       })
 
       function tick() {
@@ -203,10 +226,11 @@
             state = 'waiting'
           }
 
-          // CPU AI: track ball with bounded speed + small target jitter
-          const cpuMaxSpeed = 3.5 + Math.min(score * 0.18, 3.5)
+          // CPU AI: track ball with bounded speed + small target jitter.
+          // Starts dumb (slow, wobbly) and sharpens with the player's score.
+          const cpuMaxSpeed = 2.5 + Math.min(score * 0.2, 4)
           const targetY =
-            ball.y - PADDLE_H / 2 + (Math.random() - 0.5) * 8
+            ball.y - PADDLE_H / 2 + (Math.random() - 0.5) * 14
           if (cpuY < targetY) cpuY = Math.min(cpuY + cpuMaxSpeed, targetY)
           else if (cpuY > targetY) cpuY = Math.max(cpuY - cpuMaxSpeed, targetY)
           cpuY = Math.max(0, Math.min(H - PADDLE_H, cpuY))
@@ -244,7 +268,7 @@
         ctx.fillRect(ball.x - BALL / 2, ball.y - BALL / 2, BALL, BALL)
 
         // Overlays
-        if (state === 'loading' || state === 'waiting') {
+        if (state !== 'playing') {
           ctx.fillStyle = 'rgba(0,0,0,0.65)'
           ctx.fillRect(0, 0, W, H)
           ctx.textAlign = 'center'
@@ -253,7 +277,7 @@
             ctx.font = '20px ui-monospace, "Courier New", monospace'
             ctx.fillStyle = '#aaa'
             ctx.fillText('loading…', W / 2, H / 2)
-          } else {
+          } else if (state === 'waiting') {
             ctx.font = 'bold 56px ui-monospace, "Courier New", monospace'
             ctx.fillStyle = '#fff'
             ctx.fillText('PONG', W / 2, H / 2 - 30)
@@ -263,6 +287,14 @@
             if (best > 0) {
               ctx.fillText('best ' + best, W / 2, H / 2 + 50)
             }
+          } else {
+            ctx.font = 'bold 48px ui-monospace, "Courier New", monospace'
+            ctx.fillStyle = '#fff'
+            ctx.fillText('PAUSED', W / 2, H / 2 - 30)
+            ctx.font = '18px ui-monospace, "Courier New", monospace'
+            ctx.fillStyle = '#aaa'
+            ctx.fillText('click to resume', W / 2, H / 2 + 20)
+            ctx.fillText('score ' + score, W / 2, H / 2 + 50)
           }
         }
 
