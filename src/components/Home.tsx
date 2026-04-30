@@ -7,6 +7,7 @@ import { ChannelsView } from './ChannelsView'
 import { ChannelView } from './ChannelView'
 import { Compose } from './Compose'
 import { CreateChannel } from './CreateChannel'
+import type { TypeFilter } from './FilterPills'
 import { HomeFeed } from './HomeFeed'
 import { ReadApp } from './ReadApp'
 import { ReadAudio } from './ReadAudio'
@@ -18,17 +19,22 @@ import { Sidebar } from './Sidebar'
 import { SubscribeToChannel } from './SubscribeToChannel'
 
 type View =
-  | { kind: 'idle' }
+  | { kind: 'idle'; filter: TypeFilter }
   | { kind: 'creating' }
   | { kind: 'created'; subscribeURL: string; name: string }
   | { kind: 'subscribing' }
   | { kind: 'channels' }
-  | { kind: 'viewing-channel'; authorHandle: string; channelID: string }
+  | {
+      kind: 'viewing-channel'
+      authorHandle: string
+      channelID: string
+      filter: TypeFilter
+    }
   | { kind: 'reading'; entry: FeedEntry; returnTo: View }
   | { kind: 'bluesky-login'; resumeTo: View; cancelTo: View }
 
 export function Home() {
-  const [view, setView] = useState<View>({ kind: 'idle' })
+  const [view, setView] = useState<View>({ kind: 'idle', filter: 'all' })
   const subscriptions = useAuthStore((s) => s.subscriptions)
   const myChannels = useAuthStore((s) => s.myChannels)
   const atprotoAgent = useAuthStore((s) => s.atprotoAgent)
@@ -54,7 +60,7 @@ export function Home() {
   function gotoBlueskyLogin() {
     setView({
       kind: 'bluesky-login',
-      resumeTo: { kind: 'idle' },
+      resumeTo: { kind: 'idle', filter: 'all' },
       cancelTo: view,
     })
   }
@@ -75,7 +81,7 @@ export function Home() {
   if (view.kind === 'creating') {
     return (
       <CreateChannel
-        onCancel={() => setView({ kind: 'idle' })}
+        onCancel={() => setView({ kind: 'idle', filter: 'all' })}
         onCreated={(subscribeURL, name) =>
           setView({ kind: 'created', subscribeURL, name })
         }
@@ -106,7 +112,7 @@ export function Home() {
             </button>
             <button
               type="button"
-              onClick={() => setView({ kind: 'idle' })}
+              onClick={() => setView({ kind: 'idle', filter: 'all' })}
               className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-sm font-medium rounded-lg transition-colors"
             >
               Done
@@ -120,8 +126,8 @@ export function Home() {
   if (view.kind === 'subscribing') {
     return (
       <SubscribeToChannel
-        onCancel={() => setView({ kind: 'idle' })}
-        onSubscribed={() => setView({ kind: 'idle' })}
+        onCancel={() => setView({ kind: 'idle', filter: 'all' })}
+        onSubscribed={() => setView({ kind: 'idle', filter: 'all' })}
       />
     )
   }
@@ -129,9 +135,14 @@ export function Home() {
   if (view.kind === 'channels') {
     return (
       <ChannelsView
-        onCancel={() => setView({ kind: 'idle' })}
+        onCancel={() => setView({ kind: 'idle', filter: 'all' })}
         onChannelClick={(authorHandle, channelID) =>
-          setView({ kind: 'viewing-channel', authorHandle, channelID })
+          setView({
+            kind: 'viewing-channel',
+            authorHandle,
+            channelID,
+            filter: 'all',
+          })
         }
       />
     )
@@ -143,13 +154,20 @@ export function Home() {
       <ChannelView
         authorHandle={view.authorHandle}
         channelID={view.channelID}
+        filter={view.filter}
+        onFilterChange={(filter) => setView({ ...channelView, filter })}
         onItemClick={(entry) =>
           setView({ kind: 'reading', entry, returnTo: channelView })
         }
         onChannelClick={(authorHandle, channelID) =>
-          setView({ kind: 'viewing-channel', authorHandle, channelID })
+          setView({
+            kind: 'viewing-channel',
+            authorHandle,
+            channelID,
+            filter: 'all',
+          })
         }
-        onBack={() => setView({ kind: 'idle' })}
+        onBack={() => setView({ kind: 'idle', filter: 'all' })}
       />
     )
   }
@@ -237,6 +255,8 @@ export function Home() {
     )
   }
 
+  const idleView = view as Extract<View, { kind: 'idle' }>
+
   return (
     <div className="flex-1 p-6">
       <div className="max-w-5xl mx-auto flex flex-col lg:flex-row lg:items-start gap-6">
@@ -245,17 +265,29 @@ export function Home() {
           onSubscribe={() => setView({ kind: 'subscribing' })}
           onSeeAll={() => setView({ kind: 'channels' })}
           onChannelClick={(authorHandle, channelID) =>
-            setView({ kind: 'viewing-channel', authorHandle, channelID })
+            setView({
+              kind: 'viewing-channel',
+              authorHandle,
+              channelID,
+              filter: 'all',
+            })
           }
         />
         <div className="flex-1 lg:max-w-2xl space-y-6 min-w-0">
           {composerSlot}
           <HomeFeed
+            filter={idleView.filter}
+            onFilterChange={(filter) => setView({ ...idleView, filter })}
             onItemClick={(entry) =>
-              setView({ kind: 'reading', entry, returnTo: { kind: 'idle' } })
+              setView({ kind: 'reading', entry, returnTo: idleView })
             }
             onChannelClick={(authorHandle, channelID) =>
-              setView({ kind: 'viewing-channel', authorHandle, channelID })
+              setView({
+                kind: 'viewing-channel',
+                authorHandle,
+                channelID,
+                filter: 'all',
+              })
             }
           />
         </div>

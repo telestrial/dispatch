@@ -6,9 +6,17 @@ import { installAppBridge } from '../lib/appBridge'
 import { APP_SANDBOX } from '../lib/constants'
 import { renderMarkdown } from '../lib/markdown'
 import { formatAbsolute, formatRelativeShort } from '../lib/time'
+import { useItemBlobURL, useItemBytes } from '../lib/useItemBytes'
 import { useAuthStore } from '../stores/auth'
 import { useFeedStore } from '../stores/feed'
 import { ChannelMark } from './ChannelMark'
+import {
+  availableFiltersFor,
+  entryFilter,
+  FILTER_LABEL,
+  FilterPills,
+  type TypeFilter,
+} from './FilterPills'
 
 function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -17,54 +25,14 @@ function formatBytes(n: number): string {
   return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`
 }
 
-function useItemBytes(itemURL: string) {
-  const sdk = useAuthStore((s) => s.sdk)
-  const [bytes, setBytes] = useState<Uint8Array | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!sdk) return
-    let cancelled = false
-    setBytes(null)
-    setError(null)
-    downloadItemBytes(sdk, itemURL)
-      .then((b) => {
-        if (cancelled) return
-        setBytes(b)
-      })
-      .catch((e) => {
-        if (cancelled) return
-        setError(e instanceof Error ? e.message : 'Failed to load')
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [sdk, itemURL])
-
-  return { bytes, error }
-}
-
-function useItemBlobURL(itemURL: string, mimeType: string) {
-  const { bytes, error } = useItemBytes(itemURL)
-  const [url, setUrl] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!bytes) return
-    const blob = new Blob([bytes as BlobPart], { type: mimeType })
-    const blobURL = URL.createObjectURL(blob)
-    setUrl(blobURL)
-    return () => {
-      URL.revokeObjectURL(blobURL)
-    }
-  }, [bytes, mimeType])
-
-  return { url, error }
-}
-
 export function HomeFeed({
+  filter,
+  onFilterChange,
   onItemClick,
   onChannelClick,
 }: {
+  filter: TypeFilter
+  onFilterChange: (filter: TypeFilter) => void
   onItemClick: (entry: FeedEntry) => void
   onChannelClick: (authorHandle: string, channelID: string) => void
 }) {
@@ -90,6 +58,16 @@ export function HomeFeed({
       return sortOrder === 'oldest' ? cmp : -cmp
     })
   }, [entries, sortOrder])
+
+  const availableFilters = useMemo(
+    () => availableFiltersFor(sortedEntries),
+    [sortedEntries],
+  )
+
+  const displayedEntries = useMemo(() => {
+    if (filter === 'all') return sortedEntries
+    return sortedEntries.filter((e) => entryFilter(e) === filter)
+  }, [sortedEntries, filter])
 
   const toolbar = (
     <div className="flex items-center justify-between gap-3">
@@ -161,6 +139,11 @@ export function HomeFeed({
 
   return (
     <div className="border border-neutral-200 rounded-lg bg-white p-4 space-y-4">
+      <FilterPills
+        available={availableFilters}
+        filter={filter}
+        onFilterChange={onFilterChange}
+      />
       {toolbar}
       {errors.length > 0 && (
         <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-red-800 text-xs space-y-1">
@@ -181,9 +164,15 @@ export function HomeFeed({
         </div>
       )}
 
-      {sortedEntries.length > 0 ? (
+      {displayedEntries.length === 0 ? (
+        <p className="text-neutral-500 text-sm">
+          {filter === 'all'
+            ? 'No items yet from your subscriptions.'
+            : `No ${FILTER_LABEL[filter].toLowerCase()} yet.`}
+        </p>
+      ) : (
         <ul className="divide-y divide-neutral-200/80">
-          {sortedEntries.map((entry) => (
+          {displayedEntries.map((entry) => (
             <FeedRow
               key={entry.item.id}
               entry={entry}
@@ -192,10 +181,6 @@ export function HomeFeed({
             />
           ))}
         </ul>
-      ) : (
-        <p className="text-neutral-500 text-sm">
-          No items yet from your subscriptions.
-        </p>
       )}
     </div>
   )
