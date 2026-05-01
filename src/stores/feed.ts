@@ -15,6 +15,7 @@ type FeedState = {
   live: boolean
   refresh: (subscriptions: SubscriptionRef[]) => Promise<void>
   refreshChannel: (sub: SubscriptionRef) => Promise<void>
+  removeChannel: (channelID: string) => void
   setLive: (live: boolean) => void
   reset: () => void
 }
@@ -68,6 +69,11 @@ export const useFeedStore = create<FeedState>()((set) => ({
       )
     }
   },
+  removeChannel: (channelID) =>
+    set((s) => ({
+      entries: s.entries.filter((e) => e.channel.channelID !== channelID),
+      errors: s.errors.filter((e) => e.channelID !== channelID),
+    })),
   setLive: (live) => set({ live }),
   reset: () =>
     set({

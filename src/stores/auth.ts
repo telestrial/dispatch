@@ -45,8 +45,10 @@ type AuthState = {
   setApprovalURL: (url: string | null) => void
   addMyChannel: (channel: OwnedChannel) => void
   updateMyChannelName: (channelID: string, name: string) => void
+  removeMyChannel: (channelID: string) => void
   addSubscription: (sub: SubscriptionRef) => void
   updateSubscriptionName: (channelID: string, name: string) => void
+  removeSubscription: (channelID: string) => void
   setATProtoSession: (
     session: ATProtoSession | null,
     agent: AtpAgent | null,
@@ -83,6 +85,10 @@ export const useAuthStore = create<AuthState>()(
             c.channelID === channelID ? { ...c, name } : c,
           ),
         })),
+      removeMyChannel: (channelID) =>
+        set((s) => ({
+          myChannels: s.myChannels.filter((c) => c.channelID !== channelID),
+        })),
       addSubscription: (sub) =>
         set((s) =>
           s.subscriptions.some(
@@ -99,6 +105,12 @@ export const useAuthStore = create<AuthState>()(
             sub.channelID === channelID
               ? { ...sub, cachedName: name, label: name }
               : sub,
+          ),
+        })),
+      removeSubscription: (channelID) =>
+        set((s) => ({
+          subscriptions: s.subscriptions.filter(
+            (sub) => sub.channelID !== channelID,
           ),
         })),
       setATProtoSession: (atprotoSession, atprotoAgent) =>

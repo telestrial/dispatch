@@ -27,6 +27,7 @@ export function ChannelView({
   onSubscribe,
   onSeeAll,
   onEdit,
+  onUnpin,
   onBack,
   rightSidebar,
 }: {
@@ -41,6 +42,7 @@ export function ChannelView({
   onSubscribe: () => void
   onSeeAll: () => void
   onEdit?: () => void
+  onUnpin?: () => void
   onBack: () => void
   rightSidebar: React.ReactNode
 }) {
@@ -148,14 +150,27 @@ export function ChannelView({
                   {channelEntries.length === 1 ? '' : 's'}
                 </p>
               </div>
-              {onEdit && (
-                <button
-                  type="button"
-                  onClick={onEdit}
-                  className="shrink-0 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors cursor-pointer"
-                >
-                  Edit
-                </button>
+              {(onEdit || onUnpin) && (
+                <div className="shrink-0 flex flex-col gap-1.5">
+                  {onEdit && (
+                    <button
+                      type="button"
+                      onClick={onEdit}
+                      className="px-3 py-1.5 text-xs font-medium text-neutral-700 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors cursor-pointer"
+                    >
+                      Edit
+                    </button>
+                  )}
+                  {onUnpin && (
+                    <button
+                      type="button"
+                      onClick={onUnpin}
+                      className="px-3 py-1.5 text-xs font-medium text-neutral-500 hover:text-red-700 bg-neutral-50 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
+                    >
+                      Unpin channel
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>

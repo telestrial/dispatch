@@ -1,6 +1,10 @@
 import type { AtpAgent } from '@atproto/api'
 import type { Sdk } from '@siafoundation/sia-storage'
-import { getChannelRecord, putChannelRecord } from './atproto'
+import {
+  deleteChannelRecord,
+  getChannelRecord,
+  putChannelRecord,
+} from './atproto'
 import {
   channelKeyFromBase64,
   channelKeyToBase64,
@@ -160,6 +164,40 @@ export function buildItemRef(
     durationMs: payload.durationMs,
     filename: payload.filename,
   }
+}
+
+export async function unpinChannel(
+  sdk: Sdk,
+  agent: AtpAgent,
+  channel: { channelID: string; channelKey: string },
+): Promise<void> {
+  const session = agent.session
+  if (!session) throw new Error('ATProto agent has no session')
+
+  const manifest = await fetchChannel(
+    session.did,
+    channel.channelID,
+    channel.channelKey,
+  )
+
+  for (const item of manifest.items) {
+    try {
+      await sdk.deleteObject(item.id)
+    } catch (e) {
+      console.warn(`Failed to delete item ${item.id}:`, e)
+    }
+  }
+
+  if (manifest.coverArt) {
+    try {
+      const handle = await sdk.sharedObject(manifest.coverArt.itemURL)
+      await sdk.deleteObject(handle.id())
+    } catch (e) {
+      console.warn('Failed to delete cover art:', e)
+    }
+  }
+
+  await deleteChannelRecord(agent, channel.channelID)
 }
 
 export async function deletePublishedItem(

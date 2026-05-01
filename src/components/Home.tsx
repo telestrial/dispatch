@@ -1,6 +1,10 @@
 import { useState } from 'react'
+import { unpinChannel } from '../core/channels'
 import type { FeedEntry } from '../core/feed'
+import { fetchAccountSnapshot } from '../core/pin'
 import { useAuthStore } from '../stores/auth'
+import { useFeedStore } from '../stores/feed'
+import { usePinStore } from '../stores/pin'
 import { useToastStore } from '../stores/toast'
 import { BlueskyLoginScreen } from './BlueskyLoginScreen'
 import { ChannelsView } from './ChannelsView'
@@ -155,6 +159,28 @@ export function Home() {
   if (view.kind === 'viewing-channel') {
     const channelView = view
     const owned = myChannels.find((c) => c.channelID === view.channelID)
+    const handleUnpinChannel = async () => {
+      const sdk = useAuthStore.getState().sdk
+      const agent = useAuthStore.getState().atprotoAgent
+      if (!sdk || !agent || !owned) return
+      const confirmation = window.prompt(
+        'This drops every item in this channel from your storage and deletes the channel record. Subscribers who pinned individual items keep their copies; their share URLs keep working.\n\nType DELETE to confirm.',
+      )
+      if (confirmation !== 'DELETE') return
+      try {
+        await unpinChannel(sdk, agent, owned)
+        useAuthStore.getState().removeMyChannel(owned.channelID)
+        useAuthStore.getState().removeSubscription(owned.channelID)
+        useFeedStore.getState().removeChannel(owned.channelID)
+        fetchAccountSnapshot(sdk)
+          .then((account) => usePinStore.setState({ account }))
+          .catch(() => {})
+        addToast(`Unpinned “${owned.name}”`)
+        setView({ kind: 'idle', filter: 'all' })
+      } catch (err) {
+        addToast(err instanceof Error ? err.message : 'Failed to unpin channel')
+      }
+    }
     return (
       <ChannelView
         authorHandle={view.authorHandle}
@@ -187,6 +213,7 @@ export function Home() {
                 })
             : undefined
         }
+        onUnpin={owned ? handleUnpinChannel : undefined}
         onBack={() => setView({ kind: 'idle', filter: 'all' })}
         rightSidebar={
           <PinSidebar
