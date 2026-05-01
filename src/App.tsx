@@ -5,6 +5,7 @@ import { Navbar } from './components/Navbar'
 import { Toasts } from './components/Toast'
 import { resumeSession } from './core/atproto'
 import { useJetstream } from './lib/useJetstream'
+import { useSettingsSync } from './lib/useSettingsSync'
 import { useUploadRunner } from './lib/useUploadRunner'
 import { useAuthStore } from './stores/auth'
 import { usePinStore } from './stores/pin'
@@ -15,6 +16,7 @@ export default function App() {
 
   useJetstream()
   useUploadRunner()
+  useSettingsSync()
 
   useEffect(() => {
     const { atprotoSession, atprotoAgent, setATProtoSession } =

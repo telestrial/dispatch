@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { flushPendingSettingsSave } from '../lib/useSettingsSync'
 import { APP_NAME } from '../lib/constants'
 import { useAuthStore } from '../stores/auth'
 import { CopyButton } from './CopyButton'
@@ -8,6 +9,7 @@ export function Navbar() {
   const sdk = useAuthStore((s) => s.sdk)
   const reset = useAuthStore((s) => s.reset)
   const isConnected = step === 'connected'
+  const [signingOut, setSigningOut] = useState(false)
 
   const publicKey = useMemo(() => {
     try {
@@ -17,7 +19,14 @@ export function Navbar() {
     }
   }, [sdk])
 
-  function handleSignOut() {
+  async function handleSignOut() {
+    setSigningOut(true)
+    try {
+      // Wait for any pending settings save so K's reach Sia before logout.
+      await flushPendingSettingsSave()
+    } catch (e) {
+      console.warn('Pre-signout flush failed:', e)
+    }
     reset()
     window.location.reload()
   }
@@ -44,9 +53,10 @@ export function Navbar() {
             <button
               type="button"
               onClick={handleSignOut}
-              className="text-xs text-neutral-500 hover:text-neutral-900 transition-colors ml-1"
+              disabled={signingOut}
+              className="text-xs text-neutral-500 hover:text-neutral-900 transition-colors ml-1 disabled:opacity-50 disabled:cursor-wait"
             >
-              Sign Out
+              {signingOut ? 'Saving…' : 'Sign Out'}
             </button>
           </div>
         )}

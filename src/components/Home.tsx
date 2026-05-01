@@ -72,6 +72,7 @@ export function Home() {
   const subscriptions = useAuthStore((s) => s.subscriptions)
   const myChannels = useAuthStore((s) => s.myChannels)
   const atprotoAgent = useAuthStore((s) => s.atprotoAgent)
+  const settingsLoaded = useAuthStore((s) => s.settingsLoaded)
   const addToast = useToastStore((s) => s.addToast)
 
   function copyURL(url: string, label: string) {
@@ -489,6 +490,26 @@ export function Home() {
     }
     return <Compose channels={myChannels} />
   })()
+
+  if (
+    !settingsLoaded &&
+    subscriptions.length === 0 &&
+    myChannels.length === 0
+  ) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center space-y-3">
+          <div className="inline-flex items-center gap-2 text-neutral-500 text-sm">
+            <span className="size-2 rounded-full bg-green-500 animate-pulse" />
+            Restoring your channels from Sia…
+          </div>
+          <p className="text-neutral-400 text-xs">
+            Pulling your settings from Sia. Should only take a moment.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   if (subscriptions.length === 0) {
     return (

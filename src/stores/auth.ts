@@ -37,6 +37,8 @@ type AuthState = {
   atprotoSession: ATProtoSession | null
   atprotoAgent: AtpAgent | null
   feedSortOrder: FeedSortOrder
+  settingsObjectID: string | null
+  settingsLoaded: boolean
   setSdk: (sdk: Sdk) => void
   setStep: (step: AuthStep) => void
   setError: (error: string | null) => void
@@ -54,6 +56,13 @@ type AuthState = {
     agent: AtpAgent | null,
   ) => void
   setFeedSortOrder: (order: FeedSortOrder) => void
+  hydrateSettings: (
+    myChannels: OwnedChannel[],
+    subscriptions: SubscriptionRef[],
+    objectID: string,
+  ) => void
+  setSettingsObjectID: (id: string) => void
+  setSettingsLoaded: (loaded: boolean) => void
   reset: () => void
 }
 
@@ -71,6 +80,8 @@ export const useAuthStore = create<AuthState>()(
       atprotoSession: null,
       atprotoAgent: null,
       feedSortOrder: 'newest',
+      settingsObjectID: null,
+      settingsLoaded: false,
       setSdk: (sdk) => set({ sdk, step: 'connected', error: null }),
       setStep: (step) => set({ step, error: null }),
       setError: (error) => set({ error }),
@@ -116,6 +127,15 @@ export const useAuthStore = create<AuthState>()(
       setATProtoSession: (atprotoSession, atprotoAgent) =>
         set({ atprotoSession, atprotoAgent }),
       setFeedSortOrder: (feedSortOrder) => set({ feedSortOrder }),
+      hydrateSettings: (myChannels, subscriptions, objectID) =>
+        set({
+          myChannels,
+          subscriptions,
+          settingsObjectID: objectID,
+          settingsLoaded: true,
+        }),
+      setSettingsObjectID: (settingsObjectID) => set({ settingsObjectID }),
+      setSettingsLoaded: (settingsLoaded) => set({ settingsLoaded }),
       reset: () => {
         useFeedStore.getState().reset()
         usePinStore.getState().reset()
@@ -130,6 +150,8 @@ export const useAuthStore = create<AuthState>()(
           subscriptions: [],
           atprotoSession: null,
           atprotoAgent: null,
+          settingsObjectID: null,
+          settingsLoaded: false,
         })
       },
     }),
@@ -142,6 +164,7 @@ export const useAuthStore = create<AuthState>()(
         subscriptions: state.subscriptions,
         atprotoSession: state.atprotoSession,
         feedSortOrder: state.feedSortOrder,
+        settingsObjectID: state.settingsObjectID,
       }),
     },
   ),
