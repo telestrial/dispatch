@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { type ChangeEvent, useEffect, useState } from 'react'
 import { createChannel } from '../core/channels'
 import { useAuthStore } from '../stores/auth'
+
+const ACCEPTED_COVER_MIMES = ['image/jpeg', 'image/png', 'image/webp']
 
 export function CreateChannel({
   onCancel,
@@ -16,8 +18,37 @@ export function CreateChannel({
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [coverPreviewURL, setCoverPreviewURL] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!coverFile) {
+      setCoverPreviewURL(null)
+      return
+    }
+    const url = URL.createObjectURL(coverFile)
+    setCoverPreviewURL(url)
+    return () => URL.revokeObjectURL(url)
+  }, [coverFile])
+
+  function handleCoverChange(e: ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0] ?? null
+    if (!f) {
+      setCoverFile(null)
+      return
+    }
+    if (!ACCEPTED_COVER_MIMES.includes(f.type)) {
+      setError(
+        `Unsupported cover type: ${f.type || 'unknown'}. Use JPEG, PNG, or WebP.`,
+      )
+      setCoverFile(null)
+      return
+    }
+    setError(null)
+    setCoverFile(f)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -31,9 +62,18 @@ export function CreateChannel({
     setSubmitting(true)
     setError(null)
     try {
+      let coverImage: { bytes: Uint8Array; mimeType: string } | undefined
+      if (coverFile) {
+        const buf = await coverFile.arrayBuffer()
+        coverImage = {
+          bytes: new Uint8Array(buf),
+          mimeType: coverFile.type,
+        }
+      }
       const result = await createChannel(sdk, agent, {
         name: trimmedName,
         description: description.trim(),
+        coverImage,
       })
       addMyChannel({
         channelID: result.channelID,
@@ -67,8 +107,8 @@ export function CreateChannel({
           Create a channel
         </h1>
         <p className="text-neutral-500 text-sm">
-          A publishing handle. Could be a person, a topic, a project, a
-          business — anything.
+          A publishing handle. Could be a person, a topic, a project, a business
+          — anything.
         </p>
       </div>
 
@@ -101,13 +141,39 @@ export function CreateChannel({
             className="w-full px-3 py-2 bg-white border border-neutral-300 rounded-lg text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-green-600 disabled:bg-neutral-50 disabled:text-neutral-500"
           />
         </label>
+
+        <label className="block space-y-2">
+          <span className="text-xs font-medium text-neutral-700 uppercase tracking-wider">
+            Cover image <span className="text-neutral-400">(optional)</span>
+          </span>
+          <div className="flex items-center gap-3">
+            {coverPreviewURL ? (
+              <img
+                src={coverPreviewURL}
+                alt="cover preview"
+                className="size-16 rounded-full object-cover border border-neutral-200 shrink-0"
+              />
+            ) : (
+              <div className="size-16 rounded-full bg-neutral-100 border border-neutral-200 shrink-0" />
+            )}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleCoverChange}
+              disabled={submitting}
+              className="block w-full text-sm text-neutral-700 file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-neutral-100 file:text-neutral-900 hover:file:bg-neutral-200 file:cursor-pointer disabled:opacity-50"
+            />
+          </div>
+        </label>
       </div>
 
       {error && <p className="text-red-600 text-sm wrap-break-word">{error}</p>}
 
       {submitting && (
         <p className="text-neutral-500 text-xs">
-          Generating channel key, encrypting manifest, writing to ATProto.
+          {coverFile
+            ? 'Uploading cover to Sia (~20 seconds), encrypting manifest, writing to ATProto.'
+            : 'Generating channel key, encrypting manifest, writing to ATProto.'}
         </p>
       )}
 

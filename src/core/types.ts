@@ -16,6 +16,11 @@ export type ItemRef = {
   filename?: string
 }
 
+export type ChannelCover = {
+  itemURL: string
+  mimeType: string
+}
+
 export type ChannelManifest = {
   version: typeof CHANNEL_MANIFEST_VERSION
   name: string
@@ -23,7 +28,7 @@ export type ChannelManifest = {
   authorPubkey: string
   authorATProtoDID: string
   publishedAt: string
-  coverArtItemURL?: string
+  coverArt?: ChannelCover
   language?: string
   items: ItemRef[]
 }
@@ -31,7 +36,7 @@ export type ChannelManifest = {
 export type SubscriptionRef = {
   authorHandle: string
   authorDID: string
-  channelID: string         // base32(sha256(K)).slice(0,16); ATProto rkey
+  channelID: string // base32(sha256(K)).slice(0,16); ATProto rkey
   channelKey: string
   label?: string
   cachedName?: string

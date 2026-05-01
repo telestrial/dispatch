@@ -19,7 +19,7 @@ import {
 
 export type CreatedChannel = {
   channelID: string
-  channelKey: string             // base64
+  channelKey: string // base64
   manifest: ChannelManifest
   subscribeURL: string
 }
@@ -37,7 +37,11 @@ export type ItemPayload = {
 export async function createChannel(
   sdk: Sdk,
   agent: AtpAgent,
-  args: { name: string; description: string },
+  args: {
+    name: string
+    description: string
+    coverImage?: { bytes: Uint8Array; mimeType: string }
+  },
 ): Promise<CreatedChannel> {
   const session = agent.session
   if (!session) throw new Error('ATProto agent has no session')
@@ -46,6 +50,12 @@ export async function createChannel(
   const channelKey = channelKeyToBase64(keyBytes)
   const channelID = await deriveChannelID(keyBytes)
 
+  let coverArt: ChannelManifest['coverArt']
+  if (args.coverImage) {
+    const uploaded = await uploadItem(sdk, args.coverImage.bytes)
+    coverArt = { itemURL: uploaded.itemURL, mimeType: args.coverImage.mimeType }
+  }
+
   const manifest: ChannelManifest = {
     version: CHANNEL_MANIFEST_VERSION,
     name: args.name,
@@ -53,6 +63,7 @@ export async function createChannel(
     authorPubkey: sdk.appKey().publicKey(),
     authorATProtoDID: session.did,
     publishedAt: new Date().toISOString(),
+    coverArt,
     items: [],
   }
 
