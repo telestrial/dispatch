@@ -6,9 +6,11 @@ import { Toasts } from './components/Toast'
 import { resumeSession } from './core/atproto'
 import { useJetstream } from './lib/useJetstream'
 import { useAuthStore } from './stores/auth'
+import { usePinStore } from './stores/pin'
 
 export default function App() {
   const step = useAuthStore((s) => s.step)
+  const sdk = useAuthStore((s) => s.sdk)
 
   useJetstream()
 
@@ -30,6 +32,11 @@ export default function App() {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    if (!sdk) return
+    usePinStore.getState().refreshAccount(sdk)
+  }, [sdk])
 
   return (
     <div className="min-h-screen flex flex-col">

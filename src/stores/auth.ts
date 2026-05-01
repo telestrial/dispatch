@@ -6,6 +6,7 @@ import type { ATProtoSession } from '../core/atproto'
 import type { SubscriptionRef } from '../core/types'
 import { APP_KEY } from '../lib/constants'
 import { useFeedStore } from './feed'
+import { usePinStore } from './pin'
 
 export type AuthStep =
   | 'loading'
@@ -104,6 +105,7 @@ export const useAuthStore = create<AuthState>()(
       setFeedSortOrder: (feedSortOrder) => set({ feedSortOrder }),
       reset: () => {
         useFeedStore.getState().reset()
+        usePinStore.getState().reset()
         set({
           sdk: null,
           storedKeyHex: null,
