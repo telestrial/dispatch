@@ -1,9 +1,5 @@
 # Pin
 
-## ▶ [pin-liard.vercel.app](https://pin-liard.vercel.app/)
-
-Best in Chrome.
-
 Decentralized personal feeds. Channels you own, subscriptions you pick, no platform between author and reader.
 
 ## What it does
@@ -14,17 +10,21 @@ A **channel** is a publishing handle — a person, a persona, a topic, a project
 
 There is no Pin server, no Pin database, no platform between authors and readers. Item bytes live on Sia, encrypted with per-object keys. The mutable channel record lives on ATProto as a publicly-readable record whose body is ciphertext encrypted under a per-channel key `K` that never leaves the URL fragment of the subscribe link. Anyone can fetch a record; only people you sent the URL to can decrypt it. A reader who pins becomes a host of those bytes — Sia gets stronger for that channel as more readers commit. An author can retract from their own storage, but a subscriber's pinned copy persists. Twitter delete is unilateral; Pin retract is custody being released.
 
----
-
-The rest of this README goes deeper: a step-by-step demo flow, the specific Sia SDK calls Pin uses (and where), the architecture, the sandboxed App Host API, what's out of v1 scope, and how to run locally if you want to clone instead of clicking the link above.
-
 ## Demo flow
 
+### ▶ [pin-liard.vercel.app](https://pin-liard.vercel.app/) — best in Chrome
+
+Open it in two windows side by side (an Incognito window for the second one, ideally with a different Sia account to demonstrate cross-tenant), then:
+
 1. **Window A (author)**: finish Sia + Bluesky onboarding. Click **+ Create a channel**, give it a name and (optionally) a cover image. Copy the subscribe URL.
-2. **Window B (subscriber)**, ideally an Incognito window with a different Sia account to demonstrate cross-tenant: finish Sia onboarding only. Click **+ Subscribe** and paste Window A's subscribe URL.
+2. **Window B (subscriber)**: finish Sia onboarding only. Click **+ Subscribe** and paste Window A's subscribe URL.
 3. Back in Window A: publish a few items from the inline composer at the top of the feed. **Drag a file directly onto the composer card** to auto-route to the right tab (image / audio / video / file / app, by MIME) and pre-fill it. The Note tab has a 281-character limit (one more than Twitter, intentional). Click Publish — the form resets immediately and the **upload queue** in the right sidebar takes over, ticking through shard-upload progress and finally going green when the manifest commits. The UI never blocks.
 4. In Window B: items appear LIVE as Window A publishes — no refresh needed. Pin subscribes to ATProto's JetStream firehose, filtered to the channels you follow, so publishes propagate within ~1 second. The green pulsing **Live** indicator on the toolbar shows the WS connection. Manual Refresh stays as a backstop.
 5. **Pin moment.** In Window B, hover an item and click the pin icon. The item is now mirrored into Window B's Sia storage; the right sidebar's bar ticks up and the item appears in **Pinned**. Then in Window A, click the (filled, owned-author-green) pin icon on the same item and type `DELETE` to retract. The item disappears from Window A's feed and storage — but Window B's pinned copy persists, with a working share URL. That's custody at work.
+
+---
+
+The rest of this README goes deeper: the specific Sia SDK calls Pin uses (and where), the architecture, the sandboxed App Host API, what's out of v1 scope, and how to run locally if you want to clone instead of clicking the link above.
 
 ## Sia SDK usage
 
