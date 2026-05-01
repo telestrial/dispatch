@@ -31,6 +31,7 @@ export function ChannelView({
   onUnpin,
   onBack,
   rightSidebar,
+  composerSlot,
 }: {
   authorHandle: string
   channelID: string
@@ -46,6 +47,7 @@ export function ChannelView({
   onUnpin?: () => void
   onBack: () => void
   rightSidebar: React.ReactNode
+  composerSlot?: React.ReactNode
 }) {
   const sub = useAuthStore((s) =>
     s.subscriptions.find(
@@ -179,6 +181,8 @@ export function ChannelView({
               )}
             </div>
           </div>
+
+          {composerSlot}
 
           <div className="border border-neutral-200 rounded-lg bg-white p-4 space-y-4">
             <FilterPills

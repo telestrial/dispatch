@@ -34,7 +34,13 @@ function tabForFile(file: File): Tab {
   return 'file'
 }
 
-export function Compose({ channels }: { channels: OwnedChannel[] }) {
+export function Compose({
+  channels,
+  hideChannel = false,
+}: {
+  channels: OwnedChannel[]
+  hideChannel?: boolean
+}) {
   const [tab, setTab] = useState<Tab>('note')
   const [selectedID, setSelectedID] = useState<string>(
     channels[0]?.channelID ?? '',
@@ -104,24 +110,25 @@ export function Compose({ channels }: { channels: OwnedChannel[] }) {
         </div>
       )}
       <div className="flex items-center gap-2 flex-wrap">
-        {channels.length > 1 ? (
-          <select
-            value={selected.channelID}
-            onChange={(e) => setSelectedID(e.target.value)}
-            aria-label="Channel to post to"
-            className="text-xs font-medium text-neutral-900 bg-neutral-100 hover:bg-neutral-200 border-0 rounded px-2 py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1"
-          >
-            {channels.map((c) => (
-              <option key={c.channelID} value={c.channelID}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <span className="text-xs font-medium text-neutral-900 px-2 py-1 bg-neutral-50 rounded">
-            {selected.name}
-          </span>
-        )}
+        {!hideChannel &&
+          (channels.length > 1 ? (
+            <select
+              value={selected.channelID}
+              onChange={(e) => setSelectedID(e.target.value)}
+              aria-label="Channel to post to"
+              className="text-xs font-medium text-neutral-900 bg-neutral-100 hover:bg-neutral-200 border-0 rounded px-2 py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1"
+            >
+              {channels.map((c) => (
+                <option key={c.channelID} value={c.channelID}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span className="text-xs font-medium text-neutral-900 px-2 py-1 bg-neutral-50 rounded">
+              {selected.name}
+            </span>
+          ))}
         <div className="flex gap-1 flex-wrap" role="tablist">
           {TABS.map((t) => {
             const active = t.tab === tab

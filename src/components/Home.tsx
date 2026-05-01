@@ -159,6 +159,19 @@ export function Home() {
   if (view.kind === 'viewing-channel') {
     const channelView = view
     const owned = myChannels.find((c) => c.channelID === view.channelID)
+    const channelComposerSlot = owned
+      ? atprotoAgent
+        ? <Compose channels={[owned]} hideChannel />
+        : (
+            <button
+              type="button"
+              onClick={gotoBlueskyLogin}
+              className="w-full text-left px-4 py-3 border border-neutral-200 rounded-lg bg-white text-sm text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition-colors cursor-pointer"
+            >
+              Sign in to Bluesky to publish →
+            </button>
+          )
+      : undefined
     const handleUnpinChannel = async () => {
       const sdk = useAuthStore.getState().sdk
       const agent = useAuthStore.getState().atprotoAgent
@@ -215,6 +228,7 @@ export function Home() {
         }
         onUnpin={owned ? handleUnpinChannel : undefined}
         onBack={() => setView({ kind: 'idle', filter: 'all' })}
+        composerSlot={channelComposerSlot}
         rightSidebar={
           <PinSidebar
             onItemClick={(ref) =>
