@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { fetchChannel } from '../core/channels'
 import type { FeedEntry } from '../core/feed'
 import type { ChannelManifest } from '../core/types'
+import { renderMarkdown } from '../lib/markdown'
 import { useAuthStore } from '../stores/auth'
 import { useFeedStore } from '../stores/feed'
 import { ChannelAvatar } from './ChannelAvatar'
@@ -141,9 +142,13 @@ export function ChannelView({
                   @{authorHandle}
                 </p>
                 {description && (
-                  <p className="text-sm text-neutral-700 mt-2 wrap-break-word whitespace-pre-wrap">
-                    {description}
-                  </p>
+                  <div
+                    className="markdown text-sm text-neutral-700 mt-2 wrap-break-word"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is sanitized via DOMPurify
+                    dangerouslySetInnerHTML={{
+                      __html: renderMarkdown(description),
+                    }}
+                  />
                 )}
                 <p className="text-xs text-neutral-500 mt-2">
                   {channelEntries.length} item
