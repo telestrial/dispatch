@@ -1,31 +1,31 @@
 # Pin
 
-**Try it: [pin-liard.vercel.app](https://pin-liard.vercel.app/)** (Chrome only — Firefox's WebTransport stack misbehaves with the Sia WASM bridge.)
+**Try it: [pin-liard.vercel.app](https://pin-liard.vercel.app/)** · Chrome only (Firefox's WebTransport stack misbehaves with the Sia WASM bridge).
 
 Decentralized personal feeds. Channels you own, subscriptions you pick, no platform between author and reader.
 
 ## What it does
 
-A **channel** is a publishing handle — a person, a persona, a topic, a project, whatever the creator names it. You can own as many channels as you want, and subscribe to other people's by pasting their subscribe URL. Items inside a channel are typed: text (markdown — short notes inline, longer posts click-through), image, audio, video, file (catch-all for anything outside the strict media whitelists), or app (a self-contained HTML widget that runs in a sandboxed iframe — see the App host API section below). Your home is a chronological collation of items from every channel you've subscribed to, mixed across types.
-
-When you find an item worth keeping, **pin it**. Pin mirrors the bytes into your own Sia storage, so your copy survives even if the original publisher unpins or disappears. The right sidebar surfaces your storage usage (`pinnedData / maxPinnedData`) and the items you've pinned; the bar fills as you commit. Pinning is a deliberate act backed by Sia storage cost — that's the social contract, and it's the verb the app is named after.
+A **channel** is a publishing handle — a person, a persona, a topic, a project. You own as many as you want and subscribe to others' by pasting a URL. Items inside a channel are typed: text (notes inline, posts click-through), image, audio, video, file, or app (a self-contained HTML widget that runs in a sandboxed iframe). Your home is a chronological mix from every channel you've subscribed to. When something's worth keeping, **pin it** — pinning mirrors the bytes into your own Sia storage so your copy survives even if the original publisher unpins. It's the verb the app is named after.
 
 ## Why it's cool
 
-There is no Pin server, no Pin database, no platform between authors and readers. Item bytes live on Sia, encrypted with per-object keys. The mutable channel record (name, description, item refs) lives on ATProto as a publicly-readable record whose body is encrypted ciphertext under a per-channel key `K` — the key never appears anywhere except the URL fragment of the subscribe link. Anyone can fetch a channel's record from ATProto; only people you've sent the subscribe URL to can decrypt it. This composes the same "URL fragment is the access capability" pattern that Sia uses for object sharing, lifted to the channel layer.
+There is no Pin server, no Pin database, no platform between authors and readers. Item bytes live on Sia, encrypted with per-object keys. The mutable channel record lives on ATProto as a publicly-readable record whose body is ciphertext encrypted under a per-channel key `K` that never leaves the URL fragment of the subscribe link. Anyone can fetch a record; only people you sent the URL to can decrypt it. A reader who pins becomes a host of those bytes — Sia gets stronger for that channel as more readers commit. An author can retract from their own storage, but a subscriber's pinned copy persists. Twitter delete is unilateral; Pin retract is custody being released.
 
-**Pinning is the social contract.** A reader who pins becomes a host of those bytes — Sia's network gets stronger for that channel as more readers commit. An author can retract from their own storage (`sdk.deleteObject` walks the channel manifest and drops the bytes), but a subscriber who pinned keeps their copy and a working share URL. The post is gone from the original feed; it isn't gone everywhere. Twitter delete is unilateral; Pin retract is custody being released. **`K` is custody capability, not authorship credential** — anyone with `K` can stand up a parallel channel from their own ATProto repo (a fork), distinguished by the handle in the subscribe URL. That fork primitive is dormant in v1 but already supported by the architecture; see "Out of v1 scope" for the migration tool that would surface it.
+## Run it locally
 
-## Setup
-
-Requires [Bun](https://bun.sh) and Chrome. (Firefox's WebTransport stack misbehaves with the Sia WASM bridge — out of scope for v1; develop and demo in Chrome.)
+Requires [Bun](https://bun.sh) and Chrome.
 
 ```sh
 bun install
 bun run dev
 ```
 
-Open the printed `http://localhost:5173` URL in Chrome. The first-time flow walks through Sia onboarding (Connect → Approve at sia.storage → save Recovery phrase → connected). Bluesky login is requested *lazily* on the first action that mutates ATProto state — creating, editing, publishing to, or unpinning a channel. Reading other people's channels and pinning their items needs no Bluesky session.
+Open the printed `http://localhost:5173` URL in Chrome.
+
+---
+
+The rest of this README goes deeper: a step-by-step demo flow, the specific Sia SDK calls Pin uses (and where), the architecture, the sandboxed App Host API, and what's deliberately out of v1 scope.
 
 ## Demo flow
 
