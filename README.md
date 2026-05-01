@@ -1,6 +1,8 @@
 # Pin
 
-**Try it: [pin-liard.vercel.app](https://pin-liard.vercel.app/)** · Chrome only (Firefox's WebTransport stack misbehaves with the Sia WASM bridge).
+## ▶ [pin-liard.vercel.app](https://pin-liard.vercel.app/)
+
+Chrome only — Firefox's WebTransport stack misbehaves with the Sia WASM bridge.
 
 Decentralized personal feeds. Channels you own, subscriptions you pick, no platform between author and reader.
 
@@ -12,20 +14,9 @@ A **channel** is a publishing handle — a person, a persona, a topic, a project
 
 There is no Pin server, no Pin database, no platform between authors and readers. Item bytes live on Sia, encrypted with per-object keys. The mutable channel record lives on ATProto as a publicly-readable record whose body is ciphertext encrypted under a per-channel key `K` that never leaves the URL fragment of the subscribe link. Anyone can fetch a record; only people you sent the URL to can decrypt it. A reader who pins becomes a host of those bytes — Sia gets stronger for that channel as more readers commit. An author can retract from their own storage, but a subscriber's pinned copy persists. Twitter delete is unilateral; Pin retract is custody being released.
 
-## Run it locally
-
-Requires [Bun](https://bun.sh) and Chrome.
-
-```sh
-bun install
-bun run dev
-```
-
-Open the printed `http://localhost:5173` URL in Chrome.
-
 ---
 
-The rest of this README goes deeper: a step-by-step demo flow, the specific Sia SDK calls Pin uses (and where), the architecture, the sandboxed App Host API, and what's deliberately out of v1 scope.
+The rest of this README goes deeper: a step-by-step demo flow, the specific Sia SDK calls Pin uses (and where), the architecture, the sandboxed App Host API, what's out of v1 scope, and how to run locally if you want to clone instead of clicking the link above.
 
 ## Demo flow
 
@@ -172,6 +163,17 @@ The framing that makes this tractable: apps can't reach Sia or ATProto directly.
 - **Object packing.** Every Sia upload pays a full slab of erasure-coded redundancy regardless of content size — small text items are inefficient. `sdk.uploadPacked()` is the v2 fix.
 - **Persistent upload queue.** Tab close during a slow upload drops the pending bytes. v2 stores task bytes in IndexedDB by task UUID so the queue resumes across reload.
 - **Channel export / import (manifest portability).** A small JSON file containing `{ channelKey, channelID, manifest }` is the entire backup image of a channel. v2 surfaces **Download manifest** + **Import manifest** affordances. Import walks every item URL and re-pins the bytes into the importer's indexer scope (mandatory because each AppKey is a distinct pinned-objects scope), then republishes the manifest under the importer's DID. Same-user import = clean migration (AppKey rotation, cross-device portability, app-rebrand recovery — would have unblocked moving the lexicon off `dev.sia.dispatch.*` for the Pin rename). Different-user import = fork, surfaced as an explicit verb with a `forkedFrom` provenance field. The framing: **`K` is custody capability, not authorship credential.**
+
+## Run it locally
+
+If you'd rather clone than click. Requires [Bun](https://bun.sh) and Chrome.
+
+```sh
+bun install
+bun run dev
+```
+
+Open the printed `http://localhost:5173` URL in Chrome. The first-time flow walks through Sia onboarding (Connect → Approve at sia.storage → save Recovery phrase → connected). Bluesky login is requested *lazily* on the first action that mutates ATProto state — creating, editing, publishing to, or unpinning a channel.
 
 ## Credits
 
