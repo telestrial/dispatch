@@ -270,10 +270,14 @@
           state = 'waiting'
         }
 
-        // CPU AI: track ball with bounded speed + small target jitter.
-        // Starts dumb (slow, wobbly) and sharpens with the player's score.
-        const cpuMaxSpeed = 2.0 + Math.min(score * 0.22, 4.5)
-        const targetY = ball.y - PADDLE_H / 2 + (Math.random() - 0.5) * 14
+        // CPU AI: track ball with bounded speed + target jitter.
+        // Starts dumb (slow, wobbly) and sharpens with the player's score —
+        // first few points are meant to come easily; cap is the same hard
+        // top speed at 6.5 so endgame still bites.
+        const cpuMaxSpeed = 1.0 + Math.min(score * 0.275, 5.5)
+        const jitterRange = score < 5 ? 22 : 14
+        const targetY =
+          ball.y - PADDLE_H / 2 + (Math.random() - 0.5) * jitterRange
         if (cpuY < targetY) cpuY = Math.min(cpuY + cpuMaxSpeed, targetY)
         else if (cpuY > targetY) cpuY = Math.max(cpuY - cpuMaxSpeed, targetY)
         cpuY = Math.max(0, Math.min(H - PADDLE_H, cpuY))
