@@ -197,6 +197,14 @@ export function Home() {
                 returnTo: channelView,
               })
             }
+            onChannelClick={(authorHandle, channelID) =>
+              setView({
+                kind: 'viewing-channel',
+                authorHandle,
+                channelID,
+                filter: 'all',
+              })
+            }
           />
         }
       />
@@ -247,6 +255,14 @@ export function Home() {
             kind: 'reading',
             entry: { item: ref.item, channel: ref.channel },
             returnTo: readingView.returnTo,
+          })
+        }
+        onChannelClick={(authorHandle, channelID) =>
+          setView({
+            kind: 'viewing-channel',
+            authorHandle,
+            channelID,
+            filter: 'all',
           })
         }
       />
@@ -393,6 +409,14 @@ export function Home() {
               kind: 'reading',
               entry: { item: ref.item, channel: ref.channel },
               returnTo: idleView,
+            })
+          }
+          onChannelClick={(authorHandle, channelID) =>
+            setView({
+              kind: 'viewing-channel',
+              authorHandle,
+              channelID,
+              filter: 'all',
             })
           }
         />

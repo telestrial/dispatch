@@ -1,6 +1,8 @@
 import { CheckCircle2, HardDrive, RotateCw, X } from 'lucide-react'
+import { useMemo } from 'react'
 import { type PinnedItemRef, usePinStore } from '../stores/pin'
 import { useAuthStore } from '../stores/auth'
+import { useFeedStore } from '../stores/feed'
 import { useToastStore } from '../stores/toast'
 import {
   type UploadTask,
@@ -45,10 +47,14 @@ function taskStateLabel(state: UploadTaskState): string {
 
 export function PinSidebar({
   onItemClick,
+  onChannelClick,
 }: {
   onItemClick?: (ref: PinnedItemRef) => void
+  onChannelClick?: (authorHandle: string, channelID: string) => void
 }) {
   const sdk = useAuthStore((s) => s.sdk)
+  const myChannels = useAuthStore((s) => s.myChannels)
+  const subscriptions = useAuthStore((s) => s.subscriptions)
   const account = usePinStore((s) => s.account)
   const pinned = usePinStore((s) => s.pinned)
   const isPinning = usePinStore((s) => s.isPinning)
@@ -57,6 +63,25 @@ export function PinSidebar({
   const tasks = useUploadQueueStore((s) => s.tasks)
   const retryTask = useUploadQueueStore((s) => s.retry)
   const removeTask = useUploadQueueStore((s) => s.remove)
+  const feedEntries = useFeedStore((s) => s.entries)
+
+  const ownedChannelStorage = useMemo(() => {
+    return myChannels
+      .map((c) => {
+        const items = feedEntries.filter(
+          (e) => e.channel.channelID === c.channelID,
+        )
+        const bytes = items.reduce((sum, e) => sum + e.item.byteSize, 0)
+        const sub = subscriptions.find((s) => s.channelID === c.channelID)
+        return {
+          channel: c,
+          bytes,
+          itemCount: items.length,
+          authorHandle: sub?.authorHandle ?? '',
+        }
+      })
+      .sort((a, b) => b.bytes - a.bytes)
+  }, [myChannels, feedEntries, subscriptions])
 
   const inFlight = [...tasks].sort((a, b) =>
     b.createdAt.localeCompare(a.createdAt),
@@ -122,6 +147,48 @@ export function PinSidebar({
           )}
         </div>
       </section>
+
+      {ownedChannelStorage.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-xs font-semibold tracking-wide uppercase text-neutral-500 px-1">
+            Your channels
+          </h2>
+          <ul aria-label="Your channels">
+            {ownedChannelStorage.map(
+              ({ channel, bytes, itemCount, authorHandle }) => (
+                <li key={channel.channelID}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      authorHandle &&
+                      onChannelClick?.(authorHandle, channel.channelID)
+                    }
+                    disabled={!onChannelClick || !authorHandle}
+                    className="w-full px-2 py-1.5 rounded transition-colors text-left flex items-start gap-2 enabled:hover:bg-neutral-50 enabled:cursor-pointer disabled:opacity-50"
+                  >
+                    <ChannelMark
+                      channelID={channel.channelID}
+                      channelName={channel.name}
+                      authorHandle={authorHandle}
+                      size="sm"
+                    />
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <p className="text-xs font-medium text-neutral-900 truncate">
+                        {channel.name}
+                      </p>
+                      <p className="text-[10px] text-neutral-500 truncate">
+                        {itemCount === 0
+                          ? 'Empty'
+                          : `${itemCount} item${itemCount === 1 ? '' : 's'} · ${formatBytes(bytes)}`}
+                      </p>
+                    </div>
+                  </button>
+                </li>
+              ),
+            )}
+          </ul>
+        </section>
+      )}
 
       {inFlight.length > 0 && (
         <section className="space-y-2">
