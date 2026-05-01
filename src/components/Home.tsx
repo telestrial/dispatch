@@ -241,6 +241,16 @@ export function Home() {
       onBack,
       backLabel,
       sidebar,
+      pinInput: {
+        itemURL: item.itemURL,
+        type: item.type,
+        title: item.title,
+        mimeType: item.mimeType,
+        byteSize: item.byteSize,
+        channelID: channel.channelID,
+        channelHandle: channel.authorHandle,
+        channelName: channel.name,
+      },
     }
     if (item.type === 'image') return <ReadImage {...readerProps} />
     if (item.type === 'audio') return <ReadAudio {...readerProps} />

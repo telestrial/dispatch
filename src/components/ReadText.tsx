@@ -4,6 +4,8 @@ import type { ItemRef } from '../core/types'
 import { renderMarkdown } from '../lib/markdown'
 import { formatAbsolute, formatRelative } from '../lib/time'
 import { useAuthStore } from '../stores/auth'
+import type { PinInput } from '../stores/pin'
+import { PinButton } from './PinButton'
 
 export function ReadText({
   item,
@@ -11,12 +13,14 @@ export function ReadText({
   onBack,
   backLabel,
   sidebar,
+  pinInput,
 }: {
   item: ItemRef
   channelName: string
   onBack: () => void
   backLabel: string
   sidebar: React.ReactNode
+  pinInput: PinInput
 }) {
   const sdk = useAuthStore((s) => s.sdk)
   const [html, setHtml] = useState<string | null>(null)
@@ -47,13 +51,16 @@ export function ReadText({
       <div className="max-w-5xl mx-auto flex flex-col lg:flex-row lg:items-start gap-6">
         {sidebar}
         <article className="flex-1 lg:max-w-2xl min-w-0 bg-white border border-neutral-200 rounded-lg p-5 space-y-5">
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center px-2.5 py-1 text-xs font-medium text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-full transition-colors cursor-pointer"
-          >
-            {backLabel}
-          </button>
+          <div className="flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center px-2.5 py-1 text-xs font-medium text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-full transition-colors cursor-pointer"
+            >
+              {backLabel}
+            </button>
+            <PinButton input={pinInput} />
+          </div>
 
           <header className="space-y-2">
             <p className="text-sm text-neutral-500">

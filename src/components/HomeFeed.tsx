@@ -17,6 +17,7 @@ import {
   FilterPills,
   type TypeFilter,
 } from './FilterPills'
+import { PinButton } from './PinButton'
 
 function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -405,7 +406,19 @@ export function FeedRow({
               @{channel.authorHandle}
             </button>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <PinButton
+              input={{
+                itemURL: item.itemURL,
+                type: item.type,
+                title: item.title,
+                mimeType: item.mimeType,
+                byteSize: item.byteSize,
+                channelID: channel.channelID,
+                channelHandle: channel.authorHandle,
+                channelName: channel.name,
+              }}
+            />
             <span className="text-xs font-medium px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded-full whitespace-nowrap">
               {typeLabel(item)}
             </span>
