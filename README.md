@@ -2,6 +2,8 @@
 
 Decentralized personal feeds. Channels you own, subscriptions you pick, no platform between author and reader.
 
+https://github.com/user-attachments/assets/cba3bc35-934c-4e58-a372-1358824e49f2
+
 ## What it does
 
 A **channel** is a publishing handle — a person, a persona, a topic, a project. You own as many as you want and subscribe to others' by pasting a URL. Items inside a channel are typed: text (notes inline, posts click-through), image, audio, video, file, or app (a self-contained HTML widget that runs in a sandboxed iframe). Your home is a chronological mix from every channel you've subscribed to. When something's worth keeping, **pin it** — pinning mirrors the bytes into your own Sia storage so your copy survives even if the original publisher unpins. It's the verb the app is named after.
