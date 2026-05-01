@@ -11,6 +11,7 @@ export function ReadAudio({
   onBack,
   backLabel,
   sidebar,
+  rightSidebar,
   pinInput,
 }: {
   item: ItemRef
@@ -18,6 +19,7 @@ export function ReadAudio({
   onBack: () => void
   backLabel: string
   sidebar: React.ReactNode
+  rightSidebar: React.ReactNode
   pinInput: PinInput
 }) {
   const sdk = useAuthStore((s) => s.sdk)
@@ -49,9 +51,9 @@ export function ReadAudio({
 
   return (
     <div className="flex-1 p-6">
-      <div className="max-w-5xl mx-auto flex flex-col lg:flex-row lg:items-start gap-6">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-start gap-6">
         {sidebar}
-        <article className="flex-1 lg:max-w-2xl min-w-0 bg-white border border-neutral-200 rounded-lg p-5 space-y-5">
+        <article className="flex-1 xl:max-w-2xl min-w-0 bg-white border border-neutral-200 rounded-lg p-5 space-y-5">
           <div className="flex items-center justify-between gap-2">
             <button
               type="button"
@@ -86,6 +88,7 @@ export function ReadAudio({
             </audio>
           )}
         </article>
+        {rightSidebar}
       </div>
     </div>
   )

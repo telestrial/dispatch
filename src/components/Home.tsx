@@ -16,6 +16,7 @@ import { ReadFile } from './ReadFile'
 import { ReadImage } from './ReadImage'
 import { ReadText } from './ReadText'
 import { ReadVideo } from './ReadVideo'
+import { PinSidebar } from './PinSidebar'
 import { Sidebar } from './Sidebar'
 import { SubscribeToChannel } from './SubscribeToChannel'
 
@@ -231,6 +232,7 @@ export function Home() {
         activeChannelID={channel.channelID}
       />
     )
+    const rightSidebar = <PinSidebar />
     const backLabel =
       view.returnTo.kind === 'viewing-channel'
         ? `Back to ${channel.name}`
@@ -241,6 +243,7 @@ export function Home() {
       onBack,
       backLabel,
       sidebar,
+      rightSidebar,
       pinInput: {
         itemURL: item.itemURL,
         type: item.type,
@@ -334,7 +337,7 @@ export function Home() {
 
   return (
     <div className="flex-1 p-6">
-      <div className="max-w-5xl mx-auto flex flex-col lg:flex-row lg:items-start gap-6">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-start gap-6">
         <Sidebar
           onHome={() => setView({ kind: 'idle', filter: 'all' })}
           onCreate={gotoCreating}
@@ -350,7 +353,7 @@ export function Home() {
           }
           activeHome={true}
         />
-        <div className="flex-1 lg:max-w-2xl space-y-6 min-w-0">
+        <div className="flex-1 xl:max-w-2xl space-y-6 min-w-0">
           {composerSlot}
           <HomeFeed
             filter={idleView.filter}
@@ -368,6 +371,7 @@ export function Home() {
             }
           />
         </div>
+        <PinSidebar />
       </div>
     </div>
   )
