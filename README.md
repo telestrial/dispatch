@@ -2,7 +2,7 @@
 
 ## ▶ [pin-liard.vercel.app](https://pin-liard.vercel.app/)
 
-Chrome only — Firefox's WebTransport stack misbehaves with the Sia WASM bridge.
+Best in Chrome.
 
 Decentralized personal feeds. Channels you own, subscriptions you pick, no platform between author and reader.
 
@@ -174,6 +174,8 @@ bun run dev
 ```
 
 Open the printed `http://localhost:5173` URL in Chrome. The first-time flow walks through Sia onboarding (Connect → Approve at sia.storage → save Recovery phrase → connected). Bluesky login is requested *lazily* on the first action that mutates ATProto state — creating, editing, publishing to, or unpinning a channel.
+
+A note on browser support: we pinned `@siafoundation/sia-storage` early and built against Chrome throughout the 3-day window. Cross-browser validation was out of scope — Chrome was the target, it was green from day one, and we kept iterating. The app may run elsewhere, but Chrome is the only environment we exercised.
 
 ## Credits
 
