@@ -12,15 +12,15 @@ There is no Pin server, no Pin database, no platform between authors and readers
 
 ## Demo flow
 
-### ▶ [pin-liard.vercel.app](https://pin-liard.vercel.app/) — best in Chrome
+### ▶ [pin-liard.vercel.app](https://pin-liard.vercel.app/)
 
-Open it in two windows side by side (an Incognito window for the second one, ideally with a different Sia account to demonstrate cross-tenant), then:
+Best in Chrome. Best with a friend — pair up, each open the URL on your own machine, walk through it together. One of you plays the author, the other the subscriber. (Solo? Two browser windows on one machine, Incognito for the second so the Sia accounts stay distinct.)
 
-1. **Window A (author)**: finish Sia + Bluesky onboarding. Click **+ Create a channel**, give it a name and (optionally) a cover image. Copy the subscribe URL.
-2. **Window B (subscriber)**: finish Sia onboarding only. Click **+ Subscribe** and paste Window A's subscribe URL.
-3. Back in Window A: publish a few items from the inline composer at the top of the feed. **Drag a file directly onto the composer card** to auto-route to the right tab (image / audio / video / file / app, by MIME) and pre-fill it. The Note tab has a 281-character limit (one more than Twitter, intentional). Click Publish — the form resets immediately and the **upload queue** in the right sidebar takes over, ticking through shard-upload progress and finally going green when the manifest commits. The UI never blocks.
-4. In Window B: items appear LIVE as Window A publishes — no refresh needed. Pin subscribes to ATProto's JetStream firehose, filtered to the channels you follow, so publishes propagate within ~1 second. The green pulsing **Live** indicator on the toolbar shows the WS connection. Manual Refresh stays as a backstop.
-5. **Pin moment.** In Window B, hover an item and click the pin icon. The item is now mirrored into Window B's Sia storage; the right sidebar's bar ticks up and the item appears in **Pinned**. Then in Window A, click the (filled, owned-author-green) pin icon on the same item and type `DELETE` to retract. The item disappears from Window A's feed and storage — but Window B's pinned copy persists, with a working share URL. That's custody at work.
+1. **Author**: finish Sia + Bluesky onboarding. Click **+ Create a channel**, give it a name and (optionally) a cover image. Copy the subscribe URL and send it to the subscriber.
+2. **Subscriber**: finish Sia onboarding only. Click **+ Subscribe** and paste the URL.
+3. **Author**: publish a few items from the inline composer at the top of the feed. **Drag a file directly onto the composer card** to auto-route to the right tab (image / audio / video / file / app, by MIME) and pre-fill it. The Note tab has a 281-character limit (one more than Twitter, intentional). Click Publish — the form resets immediately and the **upload queue** in the right sidebar takes over, ticking through shard-upload progress and finally going green when the manifest commits. The UI never blocks.
+4. **Subscriber**: items appear LIVE as the author publishes — no refresh needed. Pin subscribes to ATProto's JetStream firehose, filtered to the channels you follow, so publishes propagate within ~1 second. The green pulsing **Live** indicator on the toolbar shows the WS connection. Manual Refresh stays as a backstop.
+5. **Pin moment.** **Subscriber**: hover an item and click the pin icon. The item is now mirrored into your Sia storage; the right sidebar's bar ticks up and the item appears in **Pinned**. Then the **author**: click the (filled, owned-author-green) pin icon on the same item and type `DELETE` to retract. The item disappears from the author's feed and storage — but the subscriber's pinned copy persists, with a working share URL. That's custody at work.
 
 ---
 
