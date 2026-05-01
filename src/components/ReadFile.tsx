@@ -83,7 +83,7 @@ export function ReadFile({
 
           <header className="space-y-1">
             <h1 className="text-2xl font-semibold text-neutral-900 wrap-break-word">
-              {item.title}
+              {item.title || filename}
             </h1>
             <p className="text-xs text-neutral-500">
               {channelName} ·{' '}

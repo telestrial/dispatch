@@ -66,9 +66,11 @@ export function ReadImage({
           </div>
 
           <header className="space-y-1">
-            <h1 className="text-2xl font-semibold text-neutral-900 wrap-break-word">
-              {item.title}
-            </h1>
+            {item.title && (
+              <h1 className="text-2xl font-semibold text-neutral-900 wrap-break-word">
+                {item.title}
+              </h1>
+            )}
             <p className="text-xs text-neutral-500">
               {channelName} ·{' '}
               {new Date(item.publishedAt).toLocaleString(undefined, {
@@ -85,7 +87,7 @@ export function ReadImage({
           ) : (
             <img
               src={imgURL}
-              alt={item.title}
+              alt={item.title || 'image'}
               className="max-w-full rounded-lg border border-neutral-200 bg-neutral-50"
             />
           )}

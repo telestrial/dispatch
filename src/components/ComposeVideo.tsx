@@ -61,7 +61,6 @@ export function ComposeVideo({
       return
     }
     const trimmedTitle = title.trim()
-    if (!trimmedTitle) return
     setError(null)
     const buf = await file.arrayBuffer()
     enqueue({
@@ -73,7 +72,11 @@ export function ComposeVideo({
       },
       channelIDs: [channel.channelID],
     })
-    addToast(`Queued “${trimmedTitle}” for publish`)
+    addToast(
+      trimmedTitle
+        ? `Queued “${trimmedTitle}” for publish`
+        : `Queued video for publish`,
+    )
     onQueued()
   }
 
@@ -102,8 +105,7 @@ export function ComposeVideo({
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        required
-        placeholder="Title"
+        placeholder="Title (optional)"
         className="w-full px-3 py-2 bg-white border border-neutral-300 rounded-lg text-sm text-neutral-900 focus:outline-none focus:border-green-600"
       />
 
@@ -112,7 +114,7 @@ export function ComposeVideo({
       <div className="flex justify-end">
         <button
           type="submit"
-          disabled={!file || !title.trim()}
+          disabled={!file}
           className="px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-neutral-200 disabled:text-neutral-400 text-white text-sm font-medium rounded-md transition-colors"
         >
           Publish
