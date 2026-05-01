@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { unpinChannel } from '../core/channels'
 import type { FeedEntry } from '../core/feed'
 import { fetchAccountSnapshot } from '../core/pin'
-import { useAuthStore } from '../stores/auth'
+import type { ItemRef } from '../core/types'
+import { type OwnedChannel, useAuthStore } from '../stores/auth'
 import { useFeedStore } from '../stores/feed'
 import { usePinStore } from '../stores/pin'
 import { useToastStore } from '../stores/toast'
@@ -12,6 +13,7 @@ import { ChannelView } from './ChannelView'
 import { Compose } from './Compose'
 import { CreateChannel } from './CreateChannel'
 import { EditChannel } from './EditChannel'
+import { EditPost } from './EditPost'
 import type { TypeFilter } from './FilterPills'
 import { HomeFeed } from './HomeFeed'
 import { ReadApp } from './ReadApp'
@@ -43,6 +45,12 @@ type View =
       returnTo: View
     }
   | { kind: 'reading'; entry: FeedEntry; returnTo: View }
+  | {
+      kind: 'editing-post'
+      item: ItemRef
+      channel: OwnedChannel
+      returnTo: View
+    }
   | { kind: 'bluesky-login'; resumeTo: View; cancelTo: View }
 
 export function Home() {
@@ -267,6 +275,18 @@ export function Home() {
     )
   }
 
+  if (view.kind === 'editing-post') {
+    const returnTo = view.returnTo
+    return (
+      <EditPost
+        item={view.item}
+        channel={view.channel}
+        onCancel={() => setView(returnTo)}
+        onSaved={() => setView(returnTo)}
+      />
+    )
+  }
+
   if (view.kind === 'reading') {
     const { item, channel } = view.entry
     const returnTo = view.returnTo
@@ -333,7 +353,20 @@ export function Home() {
     if (item.type === 'video') return <ReadVideo {...readerProps} />
     if (item.type === 'file') return <ReadFile {...readerProps} />
     if (item.type === 'app') return <ReadApp {...readerProps} />
-    return <ReadText {...readerProps} />
+    const ownedForPost =
+      item.title !== ''
+        ? myChannels.find((c) => c.channelID === channel.channelID)
+        : undefined
+    const onEditPost = ownedForPost
+      ? () =>
+          setView({
+            kind: 'editing-post',
+            item,
+            channel: ownedForPost,
+            returnTo: readingView,
+          })
+      : undefined
+    return <ReadText {...readerProps} onEdit={onEditPost} />
   }
 
   const composerSlot = (() => {

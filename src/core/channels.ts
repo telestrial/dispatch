@@ -230,6 +230,59 @@ export async function deletePublishedItem(
   return updated
 }
 
+export async function editPost(
+  sdk: Sdk,
+  agent: AtpAgent,
+  channel: { channelID: string; channelKey: string },
+  oldItemID: string,
+  payload: ItemPayload,
+): Promise<ChannelManifest> {
+  const session = agent.session
+  if (!session) throw new Error('ATProto agent has no session')
+
+  const current = await fetchChannel(
+    session.did,
+    channel.channelID,
+    channel.channelKey,
+  )
+  const oldIndex = current.items.findIndex((i) => i.id === oldItemID)
+  if (oldIndex === -1) throw new Error('Item not found in channel')
+  const oldItem = current.items[oldIndex]
+
+  const uploaded = await uploadItem(sdk, payload.bytes)
+  const newItem: ItemRef = {
+    ...buildItemRef(uploaded, payload),
+    // Preserve the original publishedAt so the post keeps its position
+    // in chronological order. Edit ≠ republish.
+    publishedAt: oldItem.publishedAt,
+  }
+
+  const updatedItems = [...current.items]
+  updatedItems[oldIndex] = newItem
+
+  const updated: ChannelManifest = {
+    ...current,
+    publishedAt: new Date().toISOString(),
+    items: updatedItems,
+  }
+
+  const keyBytes = channelKeyFromBase64(channel.channelKey)
+  const ciphertext = await encryptForChannel(keyBytes, JSON.stringify(updated))
+  try {
+    await putChannelRecord(agent, channel.channelID, ciphertext)
+  } catch (e) {
+    // Manifest write failed — roll back the new upload so we don't leave
+    // an orphan pinned object in the user's storage.
+    sdk.deleteObject(uploaded.id).catch(() => {})
+    throw e
+  }
+
+  // Drop old bytes best-effort; subscribers who pinned keep their snapshot.
+  sdk.deleteObject(oldItemID).catch(() => {})
+
+  return updated
+}
+
 export async function appendItemToChannel(
   agent: AtpAgent,
   channel: { channelID: string; channelKey: string },
