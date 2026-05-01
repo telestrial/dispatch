@@ -12,6 +12,7 @@ import {
 import { downloadItem, uploadItem } from './sia'
 import {
   CHANNEL_MANIFEST_VERSION,
+  type ChannelCover,
   type ChannelManifest,
   type ItemRef,
   type ItemType,
@@ -76,6 +77,54 @@ export async function createChannel(
     manifest,
     subscribeURL: buildSubscribeURL(session.handle, channelKey),
   }
+}
+
+export type EditChannelPatch = {
+  name?: string
+  description?: string
+  coverImage?: { bytes: Uint8Array; mimeType: string }
+  removeCover?: boolean
+}
+
+export async function editChannel(
+  sdk: Sdk,
+  agent: AtpAgent,
+  channel: { channelID: string; channelKey: string },
+  patch: EditChannelPatch,
+): Promise<ChannelManifest> {
+  const session = agent.session
+  if (!session) throw new Error('ATProto agent has no session')
+
+  const current = await fetchChannel(
+    session.did,
+    channel.channelID,
+    channel.channelKey,
+  )
+
+  let coverArt: ChannelCover | undefined = current.coverArt
+  if (patch.removeCover) {
+    coverArt = undefined
+  } else if (patch.coverImage) {
+    const uploaded = await uploadItem(sdk, patch.coverImage.bytes)
+    coverArt = {
+      itemURL: uploaded.itemURL,
+      mimeType: patch.coverImage.mimeType,
+    }
+  }
+
+  const updated: ChannelManifest = {
+    ...current,
+    name: patch.name ?? current.name,
+    description: patch.description ?? current.description,
+    coverArt,
+    publishedAt: new Date().toISOString(),
+  }
+
+  const keyBytes = channelKeyFromBase64(channel.channelKey)
+  const ciphertext = await encryptForChannel(keyBytes, JSON.stringify(updated))
+  await putChannelRecord(agent, channel.channelID, ciphertext)
+
+  return updated
 }
 
 export async function fetchChannel(

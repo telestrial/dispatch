@@ -1,5 +1,7 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { fetchChannel } from '../core/channels'
 import type { FeedEntry } from '../core/feed'
+import type { ChannelManifest } from '../core/types'
 import { useAuthStore } from '../stores/auth'
 import { useFeedStore } from '../stores/feed'
 import { ChannelAvatar } from './ChannelAvatar'
@@ -19,6 +21,7 @@ export function ChannelView({
   onFilterChange,
   onItemClick,
   onChannelClick,
+  onEdit,
   onBack,
 }: {
   authorHandle: string
@@ -27,6 +30,7 @@ export function ChannelView({
   onFilterChange: (filter: TypeFilter) => void
   onItemClick: (entry: FeedEntry) => void
   onChannelClick: (authorHandle: string, channelID: string) => void
+  onEdit?: () => void
   onBack: () => void
 }) {
   const sub = useAuthStore((s) =>
@@ -40,6 +44,22 @@ export function ChannelView({
   const loading = useFeedStore((s) => s.loading)
   const live = useFeedStore((s) => s.live)
   const refreshChannel = useFeedStore((s) => s.refreshChannel)
+
+  const [manifest, setManifest] = useState<ChannelManifest | null>(null)
+  useEffect(() => {
+    if (!sub) return
+    let cancelled = false
+    fetchChannel(sub.authorDID || sub.authorHandle, channelID, sub.channelKey)
+      .then((m) => {
+        if (!cancelled) setManifest(m)
+      })
+      .catch(() => {
+        // Header gracefully degrades to cachedName + ChannelMark.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [sub, channelID])
 
   const channelEntries = useMemo(() => {
     const filtered = entries.filter(
@@ -65,8 +85,12 @@ export function ChannelView({
   }, [channelEntries, filter])
 
   const channelName =
-    sub?.cachedName ?? channelEntries[0]?.channel.name ?? channelID
-  const coverArt = channelEntries[0]?.channel.coverArt
+    manifest?.name ??
+    sub?.cachedName ??
+    channelEntries[0]?.channel.name ??
+    channelID
+  const coverArt = manifest?.coverArt ?? channelEntries[0]?.channel.coverArt
+  const description = manifest?.description ?? ''
 
   return (
     <div className="flex-1 p-6">
@@ -92,11 +116,25 @@ export function ChannelView({
               {channelName}
             </h1>
             <p className="text-sm text-neutral-500 truncate">@{authorHandle}</p>
-            <p className="text-xs text-neutral-500 mt-1">
+            {description && (
+              <p className="text-sm text-neutral-700 mt-2 wrap-break-word whitespace-pre-wrap">
+                {description}
+              </p>
+            )}
+            <p className="text-xs text-neutral-500 mt-2">
               {channelEntries.length} item
               {channelEntries.length === 1 ? '' : 's'}
             </p>
           </div>
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              className="shrink-0 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors cursor-pointer"
+            >
+              Edit
+            </button>
+          )}
         </div>
 
         <div className="border border-neutral-200 rounded-lg bg-white p-4 space-y-4">

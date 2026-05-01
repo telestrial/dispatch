@@ -7,6 +7,7 @@ import { ChannelsView } from './ChannelsView'
 import { ChannelView } from './ChannelView'
 import { Compose } from './Compose'
 import { CreateChannel } from './CreateChannel'
+import { EditChannel } from './EditChannel'
 import type { TypeFilter } from './FilterPills'
 import { HomeFeed } from './HomeFeed'
 import { ReadApp } from './ReadApp'
@@ -29,6 +30,12 @@ type View =
       authorHandle: string
       channelID: string
       filter: TypeFilter
+    }
+  | {
+      kind: 'editing-channel'
+      channelID: string
+      channelKey: string
+      returnTo: View
     }
   | { kind: 'reading'; entry: FeedEntry; returnTo: View }
   | { kind: 'bluesky-login'; resumeTo: View; cancelTo: View }
@@ -150,6 +157,7 @@ export function Home() {
 
   if (view.kind === 'viewing-channel') {
     const channelView = view
+    const owned = myChannels.find((c) => c.channelID === view.channelID)
     return (
       <ChannelView
         authorHandle={view.authorHandle}
@@ -167,7 +175,33 @@ export function Home() {
             filter: 'all',
           })
         }
+        onEdit={
+          owned
+            ? () =>
+                setView({
+                  kind: 'editing-channel',
+                  channelID: owned.channelID,
+                  channelKey: owned.channelKey,
+                  returnTo: channelView,
+                })
+            : undefined
+        }
         onBack={() => setView({ kind: 'idle', filter: 'all' })}
+      />
+    )
+  }
+
+  if (view.kind === 'editing-channel') {
+    const returnTo = view.returnTo
+    return (
+      <EditChannel
+        channelID={view.channelID}
+        channelKey={view.channelKey}
+        onCancel={() => setView(returnTo)}
+        onSaved={(name) => {
+          addToast(`Channel “${name}” updated`)
+          setView(returnTo)
+        }}
       />
     )
   }

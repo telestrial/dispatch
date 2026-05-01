@@ -42,7 +42,9 @@ type AuthState = {
   setIndexerURL: (url: string) => void
   setApprovalURL: (url: string | null) => void
   addMyChannel: (channel: OwnedChannel) => void
+  updateMyChannelName: (channelID: string, name: string) => void
   addSubscription: (sub: SubscriptionRef) => void
+  updateSubscriptionName: (channelID: string, name: string) => void
   setATProtoSession: (
     session: ATProtoSession | null,
     agent: AtpAgent | null,
@@ -73,6 +75,12 @@ export const useAuthStore = create<AuthState>()(
       setApprovalURL: (url) => set({ approvalURL: url }),
       addMyChannel: (channel) =>
         set((s) => ({ myChannels: [...s.myChannels, channel] })),
+      updateMyChannelName: (channelID, name) =>
+        set((s) => ({
+          myChannels: s.myChannels.map((c) =>
+            c.channelID === channelID ? { ...c, name } : c,
+          ),
+        })),
       addSubscription: (sub) =>
         set((s) =>
           s.subscriptions.some(
@@ -83,6 +91,14 @@ export const useAuthStore = create<AuthState>()(
             ? s
             : { subscriptions: [...s.subscriptions, sub] },
         ),
+      updateSubscriptionName: (channelID, name) =>
+        set((s) => ({
+          subscriptions: s.subscriptions.map((sub) =>
+            sub.channelID === channelID
+              ? { ...sub, cachedName: name, label: name }
+              : sub,
+          ),
+        })),
       setATProtoSession: (atprotoSession, atprotoAgent) =>
         set({ atprotoSession, atprotoAgent }),
       setFeedSortOrder: (feedSortOrder) => set({ feedSortOrder }),
