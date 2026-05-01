@@ -108,6 +108,17 @@
       let best = 0
       let state = 'loading' // 'loading' | 'waiting' | 'playing' | 'paused'
 
+      // ===== Physics clock =====
+      // Decouples ball/paddle motion from rAF rate. The browser may clock
+      // an iframe's rAF at 60Hz, 144Hz, or anywhere between depending on
+      // input cadence, fullscreen compositor state, and power policy. We
+      // run physics at a fixed 144Hz regardless of how often rAF fires.
+      const PHYSICS_HZ = 144
+      const PHYSICS_DT_MS = 1000 / PHYSICS_HZ
+      const MAX_PHYSICS_STEPS_PER_FRAME = 5 // avoid spiral of death on stalls
+      let lastFrameAt = performance.now()
+      let physicsAccumulatorMs = 0
+
       // ===== Diagnostics =====
       // Tracks FPS, average frame time, and mousemove events per second.
       // Rendered as a small green line on the canvas. Reset every ~1 second.
@@ -209,66 +220,83 @@
         }
       })
 
+      function physicsStep() {
+        if (state !== 'playing') return
+        ball.x += ball.vx
+        ball.y += ball.vy
+
+        // Top/bottom walls
+        if (ball.y < BALL / 2) {
+          ball.y = BALL / 2
+          ball.vy = Math.abs(ball.vy)
+        }
+        if (ball.y > H - BALL / 2) {
+          ball.y = H - BALL / 2
+          ball.vy = -Math.abs(ball.vy)
+        }
+
+        // Player paddle
+        if (
+          ball.vx < 0 &&
+          ball.x - BALL / 2 < PADDLE_W &&
+          ball.y > playerY &&
+          ball.y < playerY + PADDLE_H
+        ) {
+          ball.x = PADDLE_W + BALL / 2
+          paddleBounce(playerY, 1)
+        }
+
+        // CPU paddle
+        if (
+          ball.vx > 0 &&
+          ball.x + BALL / 2 > W - PADDLE_W &&
+          ball.y > cpuY &&
+          ball.y < cpuY + PADDLE_H
+        ) {
+          ball.x = W - PADDLE_W - BALL / 2
+          paddleBounce(cpuY, -1)
+        }
+
+        // Score / miss
+        if (ball.x > W + BALL) {
+          // Ball passed CPU → player scores
+          score += 1
+          recordBest()
+          serve(-1) // serve toward player
+        }
+        if (ball.x < -BALL) {
+          // Ball passed player → game over
+          recordBest()
+          state = 'waiting'
+        }
+
+        // CPU AI: track ball with bounded speed + small target jitter.
+        // Starts dumb (slow, wobbly) and sharpens with the player's score.
+        const cpuMaxSpeed = 2.5 + Math.min(score * 0.2, 4)
+        const targetY = ball.y - PADDLE_H / 2 + (Math.random() - 0.5) * 14
+        if (cpuY < targetY) cpuY = Math.min(cpuY + cpuMaxSpeed, targetY)
+        else if (cpuY > targetY) cpuY = Math.max(cpuY - cpuMaxSpeed, targetY)
+        cpuY = Math.max(0, Math.min(H - PADDLE_H, cpuY))
+      }
+
       function tick() {
         const tickStart = performance.now()
-        if (state === 'playing') {
-          ball.x += ball.vx
-          ball.y += ball.vy
 
-          // Top/bottom walls
-          if (ball.y < BALL / 2) {
-            ball.y = BALL / 2
-            ball.vy = Math.abs(ball.vy)
-          }
-          if (ball.y > H - BALL / 2) {
-            ball.y = H - BALL / 2
-            ball.vy = -Math.abs(ball.vy)
-          }
-
-          // Player paddle
-          if (
-            ball.vx < 0 &&
-            ball.x - BALL / 2 < PADDLE_W &&
-            ball.y > playerY &&
-            ball.y < playerY + PADDLE_H
-          ) {
-            ball.x = PADDLE_W + BALL / 2
-            paddleBounce(playerY, 1)
-          }
-
-          // CPU paddle
-          if (
-            ball.vx > 0 &&
-            ball.x + BALL / 2 > W - PADDLE_W &&
-            ball.y > cpuY &&
-            ball.y < cpuY + PADDLE_H
-          ) {
-            ball.x = W - PADDLE_W - BALL / 2
-            paddleBounce(cpuY, -1)
-          }
-
-          // Score / miss
-          if (ball.x > W + BALL) {
-            // Ball passed CPU → player scores
-            score += 1
-            recordBest()
-            serve(-1) // serve toward player
-          }
-          if (ball.x < -BALL) {
-            // Ball passed player → game over
-            recordBest()
-            state = 'waiting'
-          }
-
-          // CPU AI: track ball with bounded speed + small target jitter.
-          // Starts dumb (slow, wobbly) and sharpens with the player's score.
-          const cpuMaxSpeed = 2.5 + Math.min(score * 0.2, 4)
-          const targetY =
-            ball.y - PADDLE_H / 2 + (Math.random() - 0.5) * 14
-          if (cpuY < targetY) cpuY = Math.min(cpuY + cpuMaxSpeed, targetY)
-          else if (cpuY > targetY) cpuY = Math.max(cpuY - cpuMaxSpeed, targetY)
-          cpuY = Math.max(0, Math.min(H - PADDLE_H, cpuY))
+        // Advance physics on fixed clock, regardless of rAF rate.
+        const elapsed = Math.min(tickStart - lastFrameAt, 100)
+        lastFrameAt = tickStart
+        physicsAccumulatorMs += elapsed
+        let steps = 0
+        while (
+          physicsAccumulatorMs >= PHYSICS_DT_MS &&
+          steps < MAX_PHYSICS_STEPS_PER_FRAME
+        ) {
+          physicsStep()
+          physicsAccumulatorMs -= PHYSICS_DT_MS
+          steps++
         }
+        // If we hit the cap, drop the rest so we don't perma-lag.
+        if (physicsAccumulatorMs > PHYSICS_DT_MS * 5) physicsAccumulatorMs = 0
 
         // ===== Render =====
         // Map logical 800×600 → physical canvas pixels. Drawing then happens
